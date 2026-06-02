@@ -22,6 +22,13 @@
   width: 96px;
   height: 96px;
   transition: transform 0.3s ease;
+  flex: 0 0 auto;
+}
+
+.dice svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .dice.rolling {
@@ -49,6 +56,8 @@
 .dice-info {
   text-align: center;
   color: white;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .dice-label {
@@ -86,4 +95,93 @@
 .btn-roll:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
+  .dice-container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .dice-pair {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .dice {
+    width: 54px;
+    height: 54px;
+  }
+
+  .dice-label {
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .dice-value {
+    font-size: 1.45rem;
+    white-space: nowrap;
+  }
+
+  .btn-roll {
+    min-width: 118px;
+    min-height: 42px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .dice-container {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .dice {
+    width: 42px;
+    height: 42px;
+  }
+
+  .dice-pair {
+    gap: 6px;
+  }
+
+  .dice-label {
+    font-size: 0.72rem;
+  }
+
+  .dice-value {
+    font-size: 1.15rem;
+  }
+
+  .btn-roll {
+    min-width: 92px;
+    padding: 8px 9px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .dice-container {
+    grid-template-columns: 1fr auto;
+  }
+
+  .dice-pair {
+    grid-row: span 2;
+  }
+
+  .dice-info {
+    grid-column: 2;
+  }
+
+  .btn-roll {
+    grid-column: 2;
+    min-width: 90px;
+  }
 }

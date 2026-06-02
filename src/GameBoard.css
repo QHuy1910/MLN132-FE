@@ -4,7 +4,7 @@
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.24), transparent 32%),
     linear-gradient(135deg, #53b7ff 0%, #1f78c5 55%, #14518f 100%);
-  padding: 20px;
+  padding: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -14,23 +14,25 @@
   max-width: 1760px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.92);
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(8px);
 }
 
 .game-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   border-bottom: 2px solid #667eea;
-  padding-bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .game-header h1 {
   margin: 0 0 10px 0;
   color: #333;
-  font-size: 2rem;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .game-status {
@@ -85,7 +87,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   align-items: start;
 }
 
@@ -94,8 +96,8 @@
   justify-content: center;
   width: 100%;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.22));
-  padding: 16px;
-  border-radius: 18px;
+  padding: 12px;
+  border-radius: 14px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 28px rgba(0, 0, 0, 0.12);
   overflow: auto;
 }
@@ -103,15 +105,15 @@
 .board-overlay-shell {
   position: relative;
   width: 100%;
-  min-width: 1140px;
+  min-width: 0;
 }
 
 .board-section .board-svg {
-  min-width: 1140px;
+  min-width: 0;
 }
 
 .board-section .board-stage {
-  min-width: 1140px;
+  min-width: 0;
 }
 
 .control-section {
@@ -296,6 +298,8 @@
 .player-name {
   font-weight: 600;
   font-size: 0.95rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .turn-indicator {
@@ -360,40 +364,236 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .game-content {
-    gap: 14px;
+@media (min-width: 1200px) {
+  .game-board {
+    padding: 20px;
   }
 
-  .board-overlay-shell {
-    min-width: 980px;
+  .game-container {
+    padding: 20px;
   }
+}
 
-  .board-section .board-svg {
-    min-width: 980px;
-  }
-
-  .board-section .board-stage {
-    min-width: 980px;
-  }
-
-  .players-info-section {
-    width: 180px;
-    top: 12px;
-    left: 12px;
+@media (max-width: 1024px) {
+  .game-board {
     padding: 10px;
   }
 
-  .players-info-section.collapsed {
-    width: 72px;
+  .game-container {
+    border-radius: 12px;
+    padding: 10px;
   }
 
-  .map-controls-overlay {
-    bottom: 150px;
-    width: min(100%, 340px);
+  .game-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .game-header h1 {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+  }
+
+  .game-status {
+    font-size: 0.95rem;
+  }
+
+  .current-turn {
+    max-width: 100%;
+    padding: 7px 12px;
+    border-radius: 999px;
+    overflow-wrap: anywhere;
+  }
+
+  .game-content {
+    margin-bottom: 12px;
+  }
+
+  .board-section {
+    padding: 6px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .board-overlay-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .map-error-message {
+    top: 8px;
+    width: calc(100% - 18px);
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .players-info-section {
+    top: 8px;
+    left: 8px;
+    width: min(190px, calc(100% - 16px));
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .players-info-section h3 {
+    font-size: 0.9rem;
   }
 
   .players-info {
+    max-height: 210px;
+    overflow-y: auto;
+    gap: 6px;
+  }
+
+  .player-info-card {
+    padding: 8px 9px;
+    border-radius: 10px;
+  }
+
+  .player-info-card.current {
+    transform: none;
+  }
+
+  .player-header {
+    margin-bottom: 4px;
+  }
+
+  .player-name {
+    font-size: 0.86rem;
+  }
+
+  .player-stats {
+    font-size: 0.8rem;
+  }
+
+  .players-info-section.collapsed {
+    width: 54px;
+    padding: 8px;
+  }
+
+  .map-controls-overlay {
+    position: static;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    order: 2;
     gap: 8px;
+  }
+
+  .control-section {
+    width: 100%;
+  }
+
+  .movement-controls,
+  .spectator-info {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .dice-result {
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+
+  .btn-move {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-content {
+    gap: 10px;
+  }
+
+  .players-info-section {
+    width: min(170px, calc(100% - 16px));
+  }
+
+  .players-info-section.collapsed {
+    width: 50px;
+  }
+
+  .game-footer .btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .error-message {
+    border-left-width: 3px;
+  }
+}
+
+@media (max-width: 520px) {
+  .game-board {
+    padding: 0;
+    background: #dff3ff;
+  }
+
+  .game-container {
+    min-height: 100svh;
+    border-radius: 0;
+    padding: 8px;
+    box-shadow: none;
+  }
+
+  .game-header {
+    margin-bottom: 8px;
+  }
+
+  .game-header h1 {
+    font-size: 1.05rem;
+  }
+
+  .current-turn {
+    font-size: 0.82rem;
+  }
+
+  .players-info-section {
+    width: 146px;
+    top: 6px;
+    left: 6px;
+    padding: 7px;
+  }
+
+  .players-info {
+    max-height: 155px;
+  }
+
+  .players-panel-toggle-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 1rem;
+  }
+
+  .players-info-section h3 {
+    font-size: 0.8rem;
+  }
+
+  .player-info-card {
+    padding: 7px;
+  }
+
+  .player-name,
+  .player-stats {
+    font-size: 0.76rem;
+  }
+
+  .player-shield-badge {
+    font-size: 0.68rem;
+    padding: 2px 5px;
+  }
+
+  .map-error-message {
+    top: 6px;
+    width: calc(100% - 12px);
+    font-size: 0.78rem;
+  }
+
+  .game-footer {
+    padding-bottom: 4px;
   }
 }

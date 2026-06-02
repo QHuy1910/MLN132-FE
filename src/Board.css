@@ -2,9 +2,10 @@
 .board-stage {
   position: relative;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 1408 / 768;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: 0 20px 50px rgba(19, 68, 124, 0.22);
   background: #5ebef4;
 }
@@ -96,6 +97,11 @@
 }
 
 @media (max-width: 768px) {
+  .board-stage {
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgba(19, 68, 124, 0.18);
+  }
+
   .board-coordinate-probe {
     left: 10px;
     bottom: 10px;
