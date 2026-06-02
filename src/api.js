@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from './constants.js';
 
-let SERVER_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const ENV_SERVER_URL = import.meta.env.VITE_API_BASE_URL;
+let SERVER_URL = ENV_SERVER_URL || 'http://localhost:3000';
 let hasServerConfigAttempted = false;
 
 const joinBaseAndPath = (base, path) => `${String(base).replace(/\/$/, '')}${path}`;
@@ -36,10 +37,9 @@ export const initServerUrl = async () => {
   if (hasServerConfigAttempted) return SERVER_URL;
   hasServerConfigAttempted = true;
 
-  const candidates = [
-    API_ENDPOINTS.SERVER_CONFIG,
-    joinBaseAndPath(SERVER_URL, API_ENDPOINTS.SERVER_CONFIG)
-  ];
+  const candidates = ENV_SERVER_URL
+    ? [joinBaseAndPath(SERVER_URL, API_ENDPOINTS.SERVER_CONFIG)]
+    : [API_ENDPOINTS.SERVER_CONFIG, joinBaseAndPath(SERVER_URL, API_ENDPOINTS.SERVER_CONFIG)];
 
   for (const candidate of candidates) {
     const data = await fetchConfig(candidate);
