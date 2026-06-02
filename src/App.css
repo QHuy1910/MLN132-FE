@@ -22,6 +22,17 @@ body {
   flex-direction: column;
 }
 
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 700;
+  background: #eef7ff;
+}
+
 .hero {
   position: relative;
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { initServerUrl } from './api.js';
 import { initSocket } from './socket.js';
@@ -10,14 +10,6 @@ import Ranking from './Ranking.jsx';
 import './App.css';
 
 function AppContent() {
-  useEffect(() => {
-    initServerUrl();
-    const socket = initSocket();
-    return () => {
-      // Keep socket alive during component lifecycle
-    };
-  }, []);
-
   return (
     <Router>
       <Routes>
@@ -32,7 +24,29 @@ function AppContent() {
 }
 
 export default function App() {
-  const socket = initSocket();
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const bootstrap = async () => {
+      await initServerUrl();
+      const nextSocket = initSocket();
+      if (mounted) {
+        setSocket(nextSocket);
+      }
+    };
+
+    bootstrap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!socket) {
+    return <div className="app-loading">Đang kết nối máy chủ...</div>;
+  }
   
   return (
     <GameProvider socket={socket}>
