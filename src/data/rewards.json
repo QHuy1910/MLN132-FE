@@ -1,0 +1,253 @@
+{
+  "easy": {
+    "success": [
+      {
+        "id": "easy_move_1",
+        "name": "Tiến 1 ô",
+        "type": "move_self",
+        "value": 1
+      },
+      {
+        "id": "easy_move_2",
+        "name": "Tiến 2 ô",
+        "type": "move_self",
+        "value": 2
+      },
+      {
+        "id": "easy_move_3",
+        "name": "Tiến 3 ô",
+        "type": "move_self",
+        "value": 3
+      },
+      {
+        "id": "easy_dice_bonus_1",
+        "name": "Roll sau +1",
+        "type": "dice_bonus",
+        "value": 1
+      },
+      {
+        "id": "easy_dice_bonus_2",
+        "name": "Roll sau +2",
+        "type": "dice_bonus",
+        "value": 2
+      },
+      {
+        "id": "easy_shield",
+        "name": "Nhận khiên",
+        "type": "shield",
+        "value": 1
+      }
+    ],
+
+    "failure": [
+      {
+        "id": "easy_back_1",
+        "name": "Lùi 1 ô",
+        "type": "move_self_back",
+        "value": 1
+      },
+      {
+        "id": "easy_back_2",
+        "name": "Lùi 2 ô",
+        "type": "move_self_back",
+        "value": 2
+      },
+      {
+        "id": "easy_dice_penalty_1",
+        "name": "Roll sau -1",
+        "type": "dice_penalty",
+        "value": 1
+      },
+      {
+        "id": "easy_dice_penalty_2",
+        "name": "Roll sau -2",
+        "type": "dice_penalty",
+        "value": 2
+      }
+    ]
+  },
+
+  "medium": {
+    "success": [
+      {
+        "id": "medium_move_4",
+        "name": "Tiến 4 ô",
+        "type": "move_self",
+        "value": 4
+      },
+      {
+        "id": "medium_move_5",
+        "name": "Tiến 5 ô",
+        "type": "move_self",
+        "value": 5
+      },
+      {
+        "id": "medium_dice_bonus_3",
+        "name": "Roll sau +3",
+        "type": "dice_bonus",
+        "value": 3
+      },
+      {
+        "id": "medium_dice_bonus_4",
+        "name": "Roll sau +4",
+        "type": "dice_bonus",
+        "value": 4
+      },
+      {
+        "id": "medium_attack_3",
+        "name": "Chọn người lùi 3 ô",
+        "type": "move_target_back",
+        "value": 3
+      },
+      {
+        "id": "medium_attack_4",
+        "name": "Chọn người lùi 4 ô",
+        "type": "move_target_back",
+        "value": 4
+      },
+      {
+        "id": "medium_all_back_2",
+        "name": "Tất cả người khác lùi 2 ô",
+        "type": "move_all_others_back",
+        "value": 2
+      },
+      {
+        "id": "medium_all_back_3",
+        "name": "Tất cả người khác lùi 3 ô",
+        "type": "move_all_others_back",
+        "value": 3
+      },
+      {
+        "id": "medium_shield",
+        "name": "Nhận khiên",
+        "type": "shield",
+        "value": 1
+      }
+    ],
+
+    "failure": [
+      {
+        "id": "medium_back_3",
+        "name": "Lùi 3 ô",
+        "type": "move_self_back",
+        "value": 3
+      },
+      {
+        "id": "medium_back_4",
+        "name": "Lùi 4 ô",
+        "type": "move_self_back",
+        "value": 4
+      },
+      {
+        "id": "medium_penalty_3",
+        "name": "Roll sau -3",
+        "type": "dice_penalty",
+        "value": 3
+      },
+      {
+        "id": "medium_penalty_4",
+        "name": "Roll sau -4",
+        "type": "dice_penalty",
+        "value": 4
+      }
+    ]
+  },
+
+  "hard": {
+    "success": [
+      {
+        "id": "hard_move_7",
+        "name": "Tiến 7 ô",
+        "type": "move_self",
+        "value": 7
+      },
+      {
+        "id": "hard_move_8",
+        "name": "Tiến 8 ô",
+        "type": "move_self",
+        "value": 8
+      },
+      {
+        "id": "hard_dice_bonus_6",
+        "name": "Roll sau +6",
+        "type": "dice_bonus",
+        "value": 6
+      },
+      {
+        "id": "hard_dice_bonus_7",
+        "name": "Roll sau +7",
+        "type": "dice_bonus",
+        "value": 7
+      },
+      {
+        "id": "hard_attack_5",
+        "name": "Chọn người lùi 5 ô",
+        "type": "move_target_back",
+        "value": 5
+      },
+      {
+        "id": "hard_attack_6",
+        "name": "Chọn người lùi 6 ô",
+        "type": "move_target_back",
+        "value": 6
+      },
+      {
+        "id": "hard_all_back_4",
+        "name": "Tất cả người khác lùi 4 ô",
+        "type": "move_all_others_back",
+        "value": 4
+      },
+      {
+        "id": "hard_all_back_5",
+        "name": "Tất cả người khác lùi 5 ô",
+        "type": "move_all_others_back",
+        "value": 5
+      },
+      {
+        "id": "hard_skip_target",
+        "name": "Chọn 1 người mất lượt",
+        "type": "force_skip_target",
+        "value": 1
+      },
+      {
+        "id": "hard_shield",
+        "name": "Nhận khiên",
+        "type": "shield",
+        "value": 1
+      }
+    ],
+
+    "failure": [
+      {
+        "id": "hard_back_8",
+        "name": "Lùi 8 ô",
+        "type": "move_self_back",
+        "value": 8
+      },
+      {
+        "id": "hard_back_10",
+        "name": "Lùi 10 ô",
+        "type": "move_self_back",
+        "value": 10
+      },
+      {
+        "id": "hard_skip",
+        "name": "Mất lượt",
+        "type": "skip_turn",
+        "value": 1
+      },
+      {
+        "id": "hard_penalty_5",
+        "name": "Roll sau -5",
+        "type": "dice_penalty",
+        "value": 5
+      },
+      {
+        "id": "hard_penalty_6",
+        "name": "Roll sau -6",
+        "type": "dice_penalty",
+        "value": 6
+      }
+    ]
+  }
+}
