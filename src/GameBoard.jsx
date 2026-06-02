@@ -30,6 +30,7 @@ export default function GameBoard() {
     setGameState,
     playerName,
     playerRole,
+    playerCharacter,
     isSpectator,
     shownQuestion,
     setShownQuestion
@@ -59,6 +60,8 @@ export default function GameBoard() {
   const answerRevealTimerRef = useRef(null);
   const autoMoveTimerRef = useRef(null);
   const rewardRevealTimerRef = useRef(null);
+  const eventResolvePendingRef = useRef(false);
+  const gameSocketJoinKeyRef = useRef(null);
   const completionStartedRef = useRef(false);
   const navigationTimerRef = useRef(null);
   const socket = getSocket();
@@ -193,6 +196,7 @@ export default function GameBoard() {
     };
 
     const handleEventRewardChoices = (data) => {
+      eventResolvePendingRef.current = false;
       if (rewardRevealTimerRef.current) {
         window.clearTimeout(rewardRevealTimerRef.current);
       }
@@ -328,6 +332,7 @@ export default function GameBoard() {
     };
 
     const handleSocketError = (data) => {
+      eventResolvePendingRef.current = false;
       setError(data?.message || 'Lỗi socket');
       setIsRolling(false);
       setLoading(false);
@@ -363,6 +368,44 @@ export default function GameBoard() {
       socket.off(SOCKET_EVENTS.ERROR, handleSocketError);
     };
   }, [roomId, socket, navigate, setCurrentRoom, setGameState, finalizeGameAndNavigate, isSpectator, playerName]);
+
+  useEffect(() => {
+    if (!roomId || !playerName || !currentRoom) return;
+
+    const rejoinSocketRoom = () => {
+      const joinKey = `${socket.id || 'pending'}-${roomId}-${playerName}-${playerRole}`;
+
+      if (isSpectator) {
+        const spectator = currentRoom.spectators?.find((item) => item.name === playerName);
+        socket.emit(SOCKET_EVENTS.JOIN_AS_SPECTATOR, {
+          roomId,
+          name: playerName,
+          spectatorId: spectator?.spectatorId
+        });
+      } else {
+        const player = currentRoom.players?.find((item) => item.name === playerName);
+        socket.emit(SOCKET_EVENTS.JOIN_ROOM, {
+          roomId,
+          name: playerName,
+          playerId: player?.playerId,
+          character: playerCharacter || player?.character
+        });
+      }
+
+      socket.emit(SOCKET_EVENTS.GET_GAME_STATE, { roomId });
+      gameSocketJoinKeyRef.current = joinKey;
+    };
+
+    socket.on('connect', rejoinSocketRoom);
+    const currentJoinKey = `${socket.id || 'pending'}-${roomId}-${playerName}-${playerRole}`;
+    if (socket.connected && gameSocketJoinKeyRef.current !== currentJoinKey) {
+      rejoinSocketRoom();
+    }
+
+    return () => {
+      socket.off('connect', rejoinSocketRoom);
+    };
+  }, [socket, roomId, playerName, playerRole, playerCharacter, isSpectator, currentRoom]);
 
   const handleRollDice = async () => {
     try {
@@ -460,11 +503,31 @@ export default function GameBoard() {
       if (shownQuestion?.difficulty || eventQuestionDifficulty) {
         const difficulty = shownQuestion?.difficulty || eventQuestionDifficulty;
         answerRevealTimerRef.current = window.setTimeout(() => {
-          socket.emit(SOCKET_EVENTS.RESOLVE_EVENT_QUESTION, {
-            roomId,
-            difficulty,
-            isCorrect: !!correct
-          });
+          eventResolvePendingRef.current = true;
+          socket.timeout(6000).emit(
+            SOCKET_EVENTS.RESOLVE_EVENT_QUESTION,
+            {
+              roomId,
+              difficulty,
+              isCorrect: !!correct
+            },
+            (ackError, response) => {
+              if (!eventResolvePendingRef.current) return;
+
+              if (ackError || response?.ok === false) {
+                eventResolvePendingRef.current = false;
+                setAnswerProcessing(false);
+                setError(response?.message || 'Không nhận được phản hồi từ máy chủ. Hãy thử trả lời lại.');
+              }
+            }
+          );
+          window.setTimeout(() => {
+            if (!eventResolvePendingRef.current) return;
+
+            eventResolvePendingRef.current = false;
+            setAnswerProcessing(false);
+            setError('Đã gửi câu trả lời nhưng chưa nhận được phần thưởng/phạt. Hãy thử lại.');
+          }, 9000);
           setQuestionFeedback(null);
         }, 1100);
       }
