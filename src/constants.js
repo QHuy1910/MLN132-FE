@@ -2,7 +2,7 @@
 export const BOARD_SIZE = 68;
 export const PLAYER_COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'];
 export const DICE_FACES = [1, 2, 3, 4, 5, 6];
-export const EVENT_CELL_INDEXES = [5, 9, 13, 18, 22, 26, 30, 34, 39, 43, 49, 53, 57, 63];
+export const EVENT_CELL_INDEXES = [3, 5, 7, 9, 13, 16, 18, 20, 22, 26, 28, 30, 33, 34, 37, 39, 41, 43, 46, 49, 52, 53, 54, 57, 59, 63, 64];
 
 export const ROOM_STATUS = {
   WAITING: 'waiting',

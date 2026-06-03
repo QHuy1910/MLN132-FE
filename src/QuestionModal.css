@@ -83,6 +83,14 @@
   line-height: 1.12;
 }
 
+.qm-question-source {
+  margin: 10px 0 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .qm-question-player {
   margin: -16px 0 16px 94px;
 }
@@ -161,24 +169,108 @@
   gap: 4px;
 }
 
+.qm-reward-modal {
+  width: min(94vw, 920px);
+  max-width: 920px;
+  padding: 28px 34px 30px;
+  overflow: hidden;
+  color: #f8f5ff;
+  border: 1px solid rgba(218, 190, 255, 0.5);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(221, 199, 255, 0.28), transparent 32%),
+    radial-gradient(circle at 15% 82%, rgba(56, 189, 248, 0.2), transparent 34%),
+    radial-gradient(circle at 86% 74%, rgba(245, 158, 11, 0.18), transparent 32%),
+    linear-gradient(145deg, rgba(30, 24, 54, 0.98), rgba(15, 21, 36, 0.98) 52%, rgba(41, 20, 55, 0.98));
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.qm-reward-modal .qm-title {
+  color: #f6efff;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 20px rgba(216, 180, 254, 0.45);
+}
+
+.qm-reward-modal .qm-player-info {
+  color: rgba(245, 239, 255, 0.78);
+  font-size: 15px;
+}
+
 .qm-preview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 22px;
+  margin: 24px 0 20px;
 }
 
 .qm-preview-card {
-  min-height: 110px;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fffef6 0%, #f8f3e8 100%);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --reward-frame: rgba(210, 220, 224, 0.94);
+  --reward-frame-soft: rgba(170, 185, 190, 0.28);
+  --reward-glow: rgba(190, 205, 210, 0.28);
+  --reward-highlight: rgba(238, 245, 246, 0.18);
+  --reward-label: #dce7e9;
+  position: relative;
+  min-height: 286px;
+  padding: 0;
+  border: 2px solid var(--reward-frame);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(21, 34, 44, 0.96), rgba(5, 17, 22, 0.98)),
+    #071016;
+  box-shadow:
+    0 0 0 4px var(--reward-frame-soft),
+    0 0 34px var(--reward-glow),
+    inset 0 0 32px rgba(4, 10, 16, 0.92);
+  overflow: hidden;
+}
+
+.qm-reward-tier-easy {
+  --reward-frame: rgba(226, 237, 239, 0.98);
+  --reward-frame-soft: rgba(177, 199, 204, 0.42);
+  --reward-glow: rgba(208, 230, 235, 0.42);
+  --reward-highlight: rgba(238, 249, 250, 0.2);
+  --reward-label: #edf8fa;
+  --reward-selected: rgba(232, 245, 248, 0.68);
+}
+
+.qm-reward-tier-medium {
+  --reward-frame: rgba(255, 234, 197, 1);
+  --reward-frame-soft: rgba(226, 159, 91, 0.58);
+  --reward-glow: rgba(255, 221, 168, 0.78);
+  --reward-highlight: rgba(255, 231, 190, 0.3);
+  --reward-label: #ffe4b8;
+  --reward-selected: rgba(255, 226, 184, 0.82);
+}
+
+.qm-preview-card.qm-reward-tier-medium,
+.qm-reward-card.qm-reward-tier-medium {
+  border-width: 3px;
+  box-shadow:
+    0 0 0 5px rgba(255, 232, 198, 0.34),
+    0 0 22px rgba(255, 226, 184, 0.48),
+    0 0 42px rgba(219, 143, 76, 0.38),
+    inset 0 0 32px rgba(4, 10, 16, 0.92);
+}
+
+.qm-reward-tier-hard {
+  --reward-frame: rgba(242, 252, 255, 1);
+  --reward-frame-soft: rgba(215, 185, 255, 0.7);
+  --reward-glow: rgba(220, 190, 255, 0.96);
+  --reward-highlight: rgba(239, 253, 255, 0.5);
+  --reward-label: #f8fdff;
+  --reward-selected: rgba(196, 238, 255, 0.9);
+}
+
+.qm-preview-card.qm-reward-tier-hard,
+.qm-reward-card.qm-reward-tier-hard {
+  border-width: 3px;
+  box-shadow:
+    0 0 0 5px rgba(236, 216, 255, 0.38),
+    0 0 0 9px rgba(156, 113, 255, 0.22),
+    0 0 28px rgba(255, 255, 255, 0.42),
+    0 0 58px rgba(213, 166, 255, 0.82),
+    inset 0 0 32px rgba(4, 10, 16, 0.92);
 }
 
 .qm-preview-card-index {
@@ -190,14 +282,17 @@
 }
 
 .qm-shuffle-btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #2f80ed 0%, #56ccf2 100%);
-  color: white;
-  font-weight: 700;
+  min-width: 168px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid rgba(253, 230, 138, 0.72);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #8a5cf6 0%, #d1a85c 100%);
+  color: #fffaf0;
+  font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(47, 128, 237, 0.25);
+  letter-spacing: 0.03em;
+  box-shadow: 0 12px 28px rgba(138, 92, 246, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .qm-shuffle-btn:disabled {
@@ -208,42 +303,230 @@
 .qm-reward-deck {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 22px;
+  margin: 24px 0 0;
 }
 
 .qm-reward-card {
-  min-height: 130px;
+  --reward-frame: rgba(210, 220, 224, 0.94);
+  --reward-frame-soft: rgba(170, 185, 190, 0.28);
+  --reward-glow: rgba(190, 205, 210, 0.28);
+  --reward-highlight: rgba(238, 245, 246, 0.18);
+  --reward-label: #dce7e9;
+  --reward-selected: rgba(232, 242, 244, 0.56);
+  min-height: 286px;
+  padding: 0;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #3b3b3b 0%, #101010 100%);
-  color: white;
-  border: 2px solid #232323;
+  color: #f9f4ff;
+  border: 2px solid var(--reward-frame);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(21, 34, 44, 0.96), rgba(5, 17, 22, 0.98)),
+    #071016;
+  box-shadow:
+    0 0 0 4px var(--reward-frame-soft),
+    0 0 34px var(--reward-glow),
+    inset 0 0 32px rgba(4, 10, 16, 0.92);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .qm-reward-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, #4a4a4a 0%, #1b1b1b 100%);
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--reward-label);
+  background:
+    radial-gradient(circle at 50% 0%, var(--reward-highlight), transparent 42%),
+    linear-gradient(180deg, rgba(27, 43, 54, 0.98), rgba(5, 17, 22, 0.98)),
+    #071016;
+  box-shadow:
+    0 0 0 4px var(--reward-frame-soft),
+    0 18px 46px rgba(0, 0, 0, 0.44),
+    0 0 42px var(--reward-glow),
+    inset 0 0 34px rgba(255, 255, 255, 0.08);
 }
 
 .qm-reward-card.revealed {
-  background: linear-gradient(180deg, #fffef6 0%, #f8f3e8 100%);
-  border-color: #f0b429;
-  color: #2f2f2f;
-  box-shadow: 0 10px 26px rgba(240, 180, 41, 0.28);
+  background:
+    radial-gradient(circle at 50% 0%, var(--reward-highlight), transparent 38%),
+    linear-gradient(180deg, rgba(21, 34, 44, 0.96), rgba(5, 17, 22, 0.98)),
+    #071016;
+  border-color: var(--reward-frame);
+  color: #f9f4ff;
+  box-shadow:
+    0 0 0 4px var(--reward-frame-soft),
+    0 0 34px var(--reward-glow),
+    inset 0 0 32px rgba(4, 10, 16, 0.92);
   opacity: 1;
+}
+
+.qm-reward-card.selected,
+.qm-reward-card.selected:disabled {
+  opacity: 1;
+  border-color: var(--reward-label);
+  filter: saturate(1.16);
+  box-shadow:
+    0 0 0 5px var(--reward-frame-soft),
+    0 0 52px var(--reward-selected),
+    inset 0 0 36px rgba(255, 255, 255, 0.1);
+}
+
+.qm-reward-tier-easy .qm-card-front {
+  background:
+    linear-gradient(180deg, rgba(226, 237, 239, 0.05), transparent 44%),
+    radial-gradient(circle at 50% 12%, rgba(216, 232, 236, 0.12), transparent 42%);
+}
+
+.qm-reward-tier-medium .qm-card-front {
+  background:
+    linear-gradient(180deg, rgba(255, 210, 154, 0.2), transparent 46%),
+    radial-gradient(circle at 50% 12%, rgba(255, 232, 198, 0.34), transparent 44%);
+}
+
+.qm-reward-tier-hard .qm-card-front {
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(255, 255, 255, 0.34) 29%, rgba(103, 232, 249, 0.2) 35%, transparent 48% 100%),
+    linear-gradient(245deg, transparent 0 58%, rgba(232, 121, 249, 0.18) 66%, transparent 78%),
+    linear-gradient(180deg, rgba(125, 211, 252, 0.22), transparent 48%),
+    radial-gradient(circle at 50% 12%, rgba(239, 253, 255, 0.44), transparent 44%);
+}
+
+.qm-reward-tier-medium .qm-card-front::before {
+  border-width: 3px;
+  box-shadow:
+    inset 0 0 16px rgba(255, 232, 198, 0.12),
+    0 0 12px rgba(255, 232, 198, 0.24);
+}
+
+.qm-reward-tier-hard .qm-card-front::before {
+  border-width: 4px;
+  box-shadow:
+    inset 0 0 22px rgba(186, 230, 253, 0.22),
+    0 0 18px rgba(240, 249, 255, 0.34);
+}
+
+.qm-reward-tier-hard::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 13px;
+  pointer-events: none;
+  background:
+    linear-gradient(#0000, #0000) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(215, 185, 255, 0.82), rgba(103, 232, 249, 0.62), rgba(255, 255, 255, 0.92)) border-box,
+    linear-gradient(115deg, transparent 10%, rgba(103, 232, 249, 0.62) 22%, rgba(232, 121, 249, 0.32) 28%, transparent 38%),
+    radial-gradient(circle at 92% 8%, rgba(255, 255, 255, 0.86), transparent 15%),
+    radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.62), transparent 10%);
+  border: 4px solid transparent;
+  mix-blend-mode: screen;
+  opacity: 0.9;
 }
 
 .qm-card-front {
   display: flex;
-  min-height: 92px;
+  position: relative;
+  width: 100%;
+  min-height: 286px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 9px;
+  padding: 34px 22px 28px;
   line-height: 1.25;
+  isolation: isolate;
+}
+
+.qm-card-front::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border: 2px solid var(--reward-frame-soft);
+  clip-path: polygon(0 0, 28px 0, 28px 8px, 8px 8px, 8px 28px, 0 28px, 0 100%, 28px 100%, 28px calc(100% - 8px), 8px calc(100% - 8px), 8px calc(100% - 28px), 0 calc(100% - 28px), 0 0, 100% 0, 100% 28px, calc(100% - 8px) 28px, calc(100% - 8px) 8px, calc(100% - 28px) 8px, calc(100% - 28px) 0, 100% 0, 100% 100%, calc(100% - 28px) 100%, calc(100% - 28px) calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) calc(100% - 28px), 100% calc(100% - 28px), 100% 100%);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.qm-card-front::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--reward-label), transparent);
+  box-shadow: 0 224px 0 var(--reward-frame-soft);
+  pointer-events: none;
+}
+
+.qm-augment-corners,
+.qm-augment-frame {
+  position: absolute;
+  pointer-events: none;
+}
+
+.qm-augment-frame {
+  inset: 26px 24px;
+  border: 1px solid var(--reward-frame-soft);
+  clip-path: polygon(15% 0, 85% 0, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0 85%, 0 15%);
+  opacity: 0.75;
+}
+
+.qm-augment-corners {
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0 18px, transparent 19px) left 12px top 12px / 46px 46px no-repeat,
+    linear-gradient(225deg, rgba(255, 255, 255, 0.78) 0 18px, transparent 19px) right 12px top 12px / 46px 46px no-repeat,
+    linear-gradient(45deg, rgba(255, 255, 255, 0.55) 0 18px, transparent 19px) left 12px bottom 12px / 46px 46px no-repeat,
+    linear-gradient(315deg, rgba(255, 255, 255, 0.55) 0 18px, transparent 19px) right 12px bottom 12px / 46px 46px no-repeat;
+  opacity: 0.62;
+}
+
+.qm-augment-emblem {
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  color: #fffdf5;
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.62);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 18%, var(--reward-frame) 19% 38%, rgba(36, 58, 68, 0.72) 39% 62%, transparent 63%),
+    conic-gradient(from 45deg, var(--reward-label), var(--reward-frame), rgba(56, 189, 248, 0.74), var(--reward-label));
+  clip-path: polygon(50% 0, 60% 28%, 90% 12%, 72% 42%, 100% 50%, 72% 58%, 90% 88%, 60% 72%, 50% 100%, 40% 72%, 10% 88%, 28% 58%, 0 50%, 28% 42%, 10% 12%, 40% 28%);
+}
+
+.qm-augment-name {
+  display: block;
+  max-width: 100%;
+  color: #fff9ed;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.18;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
+  overflow-wrap: anywhere;
+}
+
+.qm-augment-description {
+  display: block;
+  max-width: 92%;
+  color: rgba(245, 251, 255, 0.8);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.36;
+}
+
+.qm-augment-number {
+  position: absolute;
+  right: 18px;
+  bottom: 15px;
+  color: var(--reward-label);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
 }
 
 .qm-card-back {
@@ -267,9 +550,51 @@
   margin-top: 10px;
 }
 
+.qm-target-list {
+  gap: 10px;
+}
+
+.qm-target-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.qm-target-name {
+  color: #24242b;
+  font-weight: 800;
+}
+
+.qm-target-position {
+  color: #667085;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .qm-reward-type {
   font-size: 12px;
   color: #666;
+}
+
+.qm-reward-modal .qm-reward-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 3px 11px;
+  border: 1px solid var(--reward-frame-soft);
+  border-radius: 999px;
+  color: var(--reward-label);
+  background: var(--reward-highlight);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .qm-answer-btn:disabled {
@@ -376,6 +701,10 @@
     font-size: 18px;
   }
 
+  .qm-question-source {
+    font-size: 12px;
+  }
+
   .qm-question-player {
     margin-left: 66px;
   }
@@ -399,5 +728,26 @@
   .qm-preview-card,
   .qm-reward-card {
     min-height: 84px;
+  }
+
+  .qm-reward-modal {
+    width: 100%;
+    padding: 24px 14px;
+  }
+
+  .qm-reward-modal .qm-title {
+    font-size: 22px;
+  }
+
+  .qm-reward-modal .qm-preview-card,
+  .qm-reward-modal .qm-reward-card,
+  .qm-reward-modal .qm-card-front {
+    min-height: 248px;
+  }
+
+  .qm-reward-modal .qm-preview-grid,
+  .qm-reward-modal .qm-reward-deck {
+    gap: 16px;
+    margin-top: 18px;
   }
 }

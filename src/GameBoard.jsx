@@ -18,6 +18,7 @@ const QUESTIONS_BY_DIFFICULTY = {
   hard: hardQuestions
 };
 
+const EVENT_QUESTION_SEQUENCE = ['easy', 'medium', 'hard'];
 const REWARD_REVEAL_DURATION_MS = 2500;
 
 export default function GameBoard() {
@@ -51,20 +52,92 @@ export default function GameBoard() {
   const [questionFeedback, setQuestionFeedback] = useState(null);
   const [pendingRewardChoices, setPendingRewardChoices] = useState(null);
   const [rewardChoiceLoading, setRewardChoiceLoading] = useState(false);
-  const [rewardChoicePhase, setRewardChoicePhase] = useState('preview');
+  const [rewardChoicePhase, setRewardChoicePhase] = useState('select');
   const [shuffledRewardChoices, setShuffledRewardChoices] = useState([]);
   const [selectedRewardChoice, setSelectedRewardChoice] = useState(null);
+  const [pendingTargetReward, setPendingTargetReward] = useState(null);
   const [eventDifficultyOpen, setEventDifficultyOpen] = useState(false);
   const [eventCellIndex, setEventCellIndex] = useState(null);
   const [eventQuestionDifficulty, setEventQuestionDifficulty] = useState(null);
+  const [eventProgress, setEventProgress] = useState({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
   const answerRevealTimerRef = useRef(null);
   const autoMoveTimerRef = useRef(null);
   const rewardRevealTimerRef = useRef(null);
   const eventResolvePendingRef = useRef(false);
+  const eventSequenceRef = useRef({ active: false, step: 0, correctCount: 0 });
+  const answerLockedRef = useRef(false);
   const gameSocketJoinKeyRef = useRef(null);
   const completionStartedRef = useRef(false);
   const navigationTimerRef = useRef(null);
+  const gameStateRef = useRef(gameState);
+  const boardMovingRef = useRef(false);
+  const pendingEventCellRef = useRef(null);
   const socket = getSocket();
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  const createEventQuestion = useCallback((difficulty, step) => {
+    const questionPool = QUESTIONS_BY_DIFFICULTY[difficulty] || [];
+    if (!questionPool.length) {
+      return null;
+    }
+
+    const randomQuestion = questionPool[Math.floor(Math.random() * questionPool.length)];
+    return {
+      ...randomQuestion,
+      difficulty,
+      isEventSequence: true,
+      eventStep: step,
+      eventTotal: EVENT_QUESTION_SEQUENCE.length
+    };
+  }, []);
+
+  const showEventQuestion = useCallback((difficulty, step) => {
+    const question = createEventQuestion(difficulty, step);
+    if (!question) {
+      setError('Khong tim thay cau hoi event cho muc nay.');
+      return false;
+    }
+
+    setQuestionFeedback(null);
+    setAnswerProcessing(false);
+    answerLockedRef.current = false;
+    setShownQuestion(question);
+    socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question });
+    return true;
+  }, [createEventQuestion, roomId, socket, setShownQuestion]);
+
+  const processEventCellLanded = useCallback((data) => {
+    setError(null);
+    setEventCellIndex(data?.cellIndex ?? null);
+    setShownQuestion(null);
+    setPendingRewardChoices(null);
+    setSelectedRewardChoice(null);
+    setPendingTargetReward(null);
+    setRewardChoicePhase('select');
+    eventSequenceRef.current = { active: true, step: 0, correctCount: 0 };
+    setEventProgress({ active: true, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
+
+    if (!isSpectator && data?.playerName === playerName) {
+      showEventQuestion(EVENT_QUESTION_SEQUENCE[0], 0);
+    }
+  }, [isSpectator, playerName, setShownQuestion, showEventQuestion]);
+
+  const handleBoardMovementStart = useCallback(() => {
+    boardMovingRef.current = true;
+  }, []);
+
+  const handleBoardMovementComplete = useCallback(() => {
+    boardMovingRef.current = false;
+    const pendingEventCell = pendingEventCellRef.current;
+    pendingEventCellRef.current = null;
+
+    if (pendingEventCell) {
+      processEventCellLanded(pendingEventCell);
+    }
+  }, [processEventCellLanded]);
 
   const finalizeGameAndNavigate = useCallback(async () => {
     if (completionStartedRef.current) return;
@@ -127,7 +200,7 @@ export default function GameBoard() {
           total: totalSteps
         });
         setIsRolling(false);
-      }, 450);
+      }, 1250);
       setHasRolledThisTurn(true);
       setCanMoveAfterRoll(true);
     };
@@ -135,6 +208,16 @@ export default function GameBoard() {
     const handlePlayerMoved = (data) => {
       if (autoMoveTimerRef.current) {
         window.clearTimeout(autoMoveTimerRef.current);
+      }
+
+      const previousPlayers = gameStateRef.current?.players || [];
+      const nextPlayers = data.players || [];
+      const hasPositionChange = nextPlayers.some((player, index) => (
+        Number(previousPlayers[index]?.position || 0) !== Number(player.position || 0)
+      ));
+
+      if (hasPositionChange) {
+        boardMovingRef.current = true;
       }
 
       setCurrentRoom(prev => prev ? {
@@ -161,14 +244,31 @@ export default function GameBoard() {
     };
 
     const handleEventCellLanded = (data) => {
-      setError(null);
-      setEventCellIndex(data?.cellIndex ?? null);
-      setEventQuestionDifficulty(null);
-      setShownQuestion(null);
-      setEventDifficultyOpen(true);
+      if (boardMovingRef.current) {
+        pendingEventCellRef.current = data;
+        return;
+      }
+
+      processEventCellLanded(data);
     };
 
-    const handleQuestionShown = () => {
+    const handleQuestionShown = (data) => {
+      answerLockedRef.current = false;
+      const question = data?.question;
+      if (question?.isEventSequence) {
+        const step = Number(question.eventStep || 0);
+        eventSequenceRef.current = {
+          active: true,
+          step,
+          correctCount: eventSequenceRef.current.correctCount || 0
+        };
+        setEventProgress((prev) => ({
+          active: true,
+          step,
+          correctCount: prev.correctCount || 0,
+          total: question.eventTotal || EVENT_QUESTION_SEQUENCE.length
+        }));
+      }
       setQuestionFeedback(null);
       setAnswerProcessing(false);
     };
@@ -189,7 +289,7 @@ export default function GameBoard() {
         window.clearTimeout(rewardRevealTimerRef.current);
       }
 
-      setShuffledRewardChoices(data.choices);
+      setPendingRewardChoices((prev) => prev ? { ...prev, choices: data.choices } : prev);
       setSelectedRewardChoice(null);
       setRewardChoicePhase('select');
       setRewardChoiceLoading(false);
@@ -220,22 +320,37 @@ export default function GameBoard() {
         setError(data.message);
       }
 
+      if (data?.noReward || !data?.choices?.length) {
+        setPendingRewardChoices(null);
+        setRewardChoicePhase('select');
+        setSelectedRewardChoice(null);
+        setPendingTargetReward(null);
+        setRewardNotice(null);
+        setShownQuestion(null);
+        setAnswerProcessing(false);
+        setQuestionFeedback(null);
+        eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
+        setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
+        return;
+      }
+
       setPendingRewardChoices({
         choices: data?.choices || [],
-        difficulty: data?.difficulty || eventQuestionDifficulty,
-        isCorrect: !!data?.isCorrect,
+        difficulty: data?.rewardDifficulty || data?.difficulty,
+        correctCount: data?.correctCount || 0,
+        isCorrect: true,
         message: data?.message || ''
       });
-      setRewardChoicePhase('preview');
-      setShuffledRewardChoices([]);
+      setRewardChoicePhase('select');
       setSelectedRewardChoice(null);
+      setPendingTargetReward(null);
       setRewardNotice(null);
 
       setShownQuestion(null);
-      setEventQuestionDifficulty(null);
-      setEventDifficultyOpen(false);
       setAnswerProcessing(false);
       setQuestionFeedback(null);
+      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
+      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
     };
 
     const handleEventRewardApplied = (data) => {
@@ -266,6 +381,7 @@ export default function GameBoard() {
       }
 
       setRewardChoiceLoading(false);
+      setPendingTargetReward(null);
       if (data?.reward) {
         setSelectedRewardChoice(data.reward);
         setRewardChoicePhase('select');
@@ -314,17 +430,19 @@ export default function GameBoard() {
       setCanMoveAfterRoll(false);
       // Close question modal when turn ended
       setShownQuestion(null);
-      setEventQuestionDifficulty(null);
-      setEventDifficultyOpen(false);
       setEventCellIndex(null);
       setAnswerProcessing(false);
       setRewardChoiceLoading(false);
       setPendingRewardChoices(null);
       setQuestionFeedback(null);
       setCanMoveAfterRoll(false);
-      setRewardChoicePhase('preview');
-      setShuffledRewardChoices([]);
+      setRewardChoicePhase('select');
       setSelectedRewardChoice(null);
+      setPendingTargetReward(null);
+      boardMovingRef.current = false;
+      pendingEventCellRef.current = null;
+      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
+      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
 
       if (data.status === 'finished') {
         finalizeGameAndNavigate();
@@ -339,9 +457,13 @@ export default function GameBoard() {
       setAnswerProcessing(false);
       setRewardChoiceLoading(false);
       setQuestionFeedback(null);
-      setRewardChoicePhase('preview');
-      setShuffledRewardChoices([]);
+      setRewardChoicePhase('select');
       setSelectedRewardChoice(null);
+      setPendingTargetReward(null);
+      boardMovingRef.current = false;
+      pendingEventCellRef.current = null;
+      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
+      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
     };
 
     socket.on(SOCKET_EVENTS.DICE_ROLLED, handleDiceRolled);
@@ -367,7 +489,7 @@ export default function GameBoard() {
       socket.off(SOCKET_EVENTS.TURN_ENDED, handleTurnEnded);
       socket.off(SOCKET_EVENTS.ERROR, handleSocketError);
     };
-  }, [roomId, socket, navigate, setCurrentRoom, setGameState, finalizeGameAndNavigate, isSpectator, playerName]);
+  }, [roomId, socket, navigate, setCurrentRoom, setGameState, finalizeGameAndNavigate, processEventCellLanded, setShownQuestion]);
 
   useEffect(() => {
     if (!roomId || !playerName || !currentRoom) return;
@@ -423,6 +545,7 @@ export default function GameBoard() {
       const preRollQuestion = { ...q, isPreRoll: true };
       setQuestionFeedback(null);
       setAnswerProcessing(false);
+      answerLockedRef.current = false;
       setShownQuestion(preRollQuestion);
       socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question: preRollQuestion });
     } catch (err) {
@@ -454,6 +577,7 @@ export default function GameBoard() {
     setEventDifficultyOpen(false);
     setQuestionFeedback(null);
     setAnswerProcessing(false);
+    answerLockedRef.current = false;
     setShownQuestion(questionWithDifficulty);
 
     socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question: questionWithDifficulty });
@@ -461,7 +585,8 @@ export default function GameBoard() {
 
   // Called when player selects an answer in the modal
   const handleAnswerSelection = async (selectedIndex) => {
-    if (!shownQuestion || answerProcessing) return;
+    if (!shownQuestion || answerProcessing || answerLockedRef.current) return;
+    answerLockedRef.current = true;
     setAnswerProcessing(true);
 
     try {
@@ -499,8 +624,65 @@ export default function GameBoard() {
         return;
       }
 
-      // Event question flow: resolve via event API (rewards/penalties)
-      if (shownQuestion?.difficulty || eventQuestionDifficulty) {
+      if (shownQuestion?.isEventSequence) {
+        answerRevealTimerRef.current = window.setTimeout(() => {
+          const currentStep = Number(shownQuestion.eventStep || eventSequenceRef.current.step || 0);
+          const nextCorrectCount = (eventSequenceRef.current.correctCount || 0) + (correct ? 1 : 0);
+          const nextStep = currentStep + 1;
+
+          if (nextStep < EVENT_QUESTION_SEQUENCE.length) {
+            eventSequenceRef.current = { active: true, step: nextStep, correctCount: nextCorrectCount };
+            setEventProgress({
+              active: true,
+              step: nextStep,
+              correctCount: nextCorrectCount,
+              total: EVENT_QUESTION_SEQUENCE.length
+            });
+            showEventQuestion(EVENT_QUESTION_SEQUENCE[nextStep], nextStep);
+            setQuestionFeedback(null);
+            setAnswerProcessing(false);
+            return;
+          }
+
+          eventSequenceRef.current = { active: false, step: currentStep, correctCount: nextCorrectCount };
+          setEventProgress({
+            active: false,
+            step: currentStep,
+            correctCount: nextCorrectCount,
+            total: EVENT_QUESTION_SEQUENCE.length
+          });
+          eventResolvePendingRef.current = true;
+          setShownQuestion(null);
+          socket.timeout(6000).emit(
+            SOCKET_EVENTS.RESOLVE_EVENT_QUESTION,
+            {
+              roomId,
+              correctCount: nextCorrectCount
+            },
+            (ackError, response) => {
+              if (!eventResolvePendingRef.current) return;
+
+              if (ackError || response?.ok === false) {
+                eventResolvePendingRef.current = false;
+                setAnswerProcessing(false);
+                setError(response?.message || 'Khong nhan duoc phan hoi tu may chu. Hay thu lai.');
+              }
+            }
+          );
+          window.setTimeout(() => {
+            if (!eventResolvePendingRef.current) return;
+
+            eventResolvePendingRef.current = false;
+            setAnswerProcessing(false);
+            setError('Da gui ket qua event nhung chua nhan duoc phan thuong. Hay thu lai.');
+          }, 9000);
+          setQuestionFeedback(null);
+        }, 1100);
+        return;
+      }
+
+      // Event question flow: resolve via event API (legacy single question)
+      if (!shownQuestion?.isEventSequence && (shownQuestion?.difficulty || eventQuestionDifficulty)) {
         const difficulty = shownQuestion?.difficulty || eventQuestionDifficulty;
         answerRevealTimerRef.current = window.setTimeout(() => {
           eventResolvePendingRef.current = true;
@@ -561,10 +743,26 @@ export default function GameBoard() {
       window.clearTimeout(rewardRevealTimerRef.current);
     }
     setSelectedRewardChoice(reward);
+    if (reward.type === 'move_target_back') {
+      setPendingTargetReward(reward);
+      return;
+    }
+
     setRewardChoiceLoading(true);
     socket.emit(SOCKET_EVENTS.CHOOSE_EVENT_REWARD, {
       roomId,
       rewardId: reward.id
+    });
+  };
+
+  const handleSelectRewardTarget = (targetPlayer) => {
+    if (!pendingTargetReward || !targetPlayer || rewardChoiceLoading) return;
+
+    setRewardChoiceLoading(true);
+    socket.emit(SOCKET_EVENTS.CHOOSE_EVENT_REWARD, {
+      roomId,
+      rewardId: pendingTargetReward.id,
+      targetPlayerId: targetPlayer.playerId || targetPlayer.name
     });
   };
 
@@ -598,6 +796,12 @@ export default function GameBoard() {
   const boardSize = gameState.boardSize || BOARD_SIZE;
   const gameFinished = gameState.status === 'finished';
   const winner = gameState.winner || players.find((player) => (player.position || 0) >= boardSize - 1);
+  const questionPlayerInfo = shownQuestion?.isEventSequence
+    ? `${isMyTurn ? 'Ban dang tra loi' : `${currentPlayer?.name || 'Nguoi choi'} dang tra loi`} - Cau ${(shownQuestion.eventStep || 0) + 1}/${shownQuestion.eventTotal || EVENT_QUESTION_SEQUENCE.length} - Dung ${eventProgress.correctCount}/3`
+    : (shownQuestion && isMyTurn ? 'Ban dang tra loi cau hoi' : shownQuestion ? `${currentPlayer?.name || 'Nguoi choi'} dang tra loi` : '');
+  const rewardTargetOptions = players.filter((player, index) => (
+    index !== currentPlayerIndex && !player.finishedRank
+  ));
 
   return (
     <div className="game-board">
@@ -642,22 +846,33 @@ export default function GameBoard() {
               }}
               onAnswer={handleAnswerSelection}
               disabled={!isMyTurn || answerProcessing}
-              playerInfo={shownQuestion && isMyTurn ? '👤 Bạn đang trả lời câu hỏi' : shownQuestion ? `📍 ${currentPlayer?.name || 'Người chơi'} đang trả lời` : ''}
+              playerInfo={questionPlayerInfo}
           />
 
           <QuestionModal
               visible={!!pendingRewardChoices}
               mode="rewardChoice"
-              rewardOptions={rewardChoicePhase === 'select' ? shuffledRewardChoices : pendingRewardChoices?.choices || []}
+              rewardOptions={pendingRewardChoices?.choices || []}
               rewardTitle={pendingRewardChoices?.isCorrect ? 'Chọn 1 trong 3 phần thưởng' : 'Chọn 1 trong 3 hình phạt'}
               rewardHint={rewardChoicePhase === 'preview'
                 ? 'Xem kỹ 3 lựa chọn trước, rồi bấm Xáo bài để trộn và úp lại.'
                 : pendingRewardChoices?.message || ''}
-              playerInfo={isMyTurn ? '👤 Chọn 1 phần quà / hình phạt' : `📍 ${currentPlayer?.name || 'Người chơi'} đang chọn`}
+              playerInfo={isMyTurn ? 'Chọn 1 phần thưởng' : `${currentPlayer?.name || 'Người chơi'} đang chọn phần thưởng`}
               onSelectReward={handleSelectRewardChoice}
               onShuffleRewardChoices={handleShuffleRewardChoices}
               rewardChoicePhase={rewardChoicePhase}
               selectedRewardChoice={selectedRewardChoice}
+              rewardDifficulty={pendingRewardChoices?.difficulty}
+              disabled={!isMyTurn || rewardChoiceLoading}
+          />
+
+          <QuestionModal
+              visible={!!pendingTargetReward}
+              mode="targetChoice"
+              targetOptions={rewardTargetOptions}
+              targetTitle={`Chon nguoi choi bi lui ${pendingTargetReward?.value || ''} buoc`}
+              targetHint={pendingTargetReward?.name || ''}
+              onSelectTarget={handleSelectRewardTarget}
               disabled={!isMyTurn || rewardChoiceLoading}
           />
         </>
@@ -701,6 +916,7 @@ export default function GameBoard() {
                     <div className="players-info">
                       {players.map((player, idx) => {
                         const shieldCount = Number(player.shieldCount || 0);
+                        const finishedRank = Number(player.finishedRank || 0);
 
                         return (
                         <div
@@ -712,6 +928,11 @@ export default function GameBoard() {
                             {idx === currentPlayerIndex && <span className="turn-indicator">🔄</span>}
                           </div>
                           <div className="player-stats">
+                            {finishedRank > 0 && (
+                              <span className="player-finished-badge" title={`Hang ${finishedRank}`}>
+                                Hang #{finishedRank}
+                              </span>
+                            )}
                             {shieldCount > 0 && (
                               <span className="player-shield-badge" title={`Khiên: ${shieldCount}`}>
                                 🛡 {shieldCount}
@@ -727,7 +948,13 @@ export default function GameBoard() {
                 </div>
               </div>
 
-              <Board players={players} currentPlayerIndex={currentPlayerIndex} boardSize={boardSize} />
+              <Board
+                players={players}
+                currentPlayerIndex={currentPlayerIndex}
+                boardSize={boardSize}
+                onMovementStart={handleBoardMovementStart}
+                onMovementComplete={handleBoardMovementComplete}
+              />
 
               <div className="control-section map-controls-overlay">
                 {(isMyTurn || isSpectator) && (

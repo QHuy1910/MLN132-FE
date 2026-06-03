@@ -7,6 +7,93 @@ const DIFFICULTY_OPTIONS = [
   { key: 'hard', label: 'Khó' }
 ];
 
+const REWARD_META = {
+  move_self: {
+    label: 'Toc bien',
+    mark: '>>',
+    description: (value) => `Tien them ${value || 1} o.`
+  },
+  move_self_back: {
+    label: 'Bat loi',
+    mark: '<<',
+    description: (value) => `Lui ${value || 1} o.`
+  },
+  dice_bonus: {
+    label: 'Cuong hoa',
+    mark: '+D',
+    description: (value) => `Lan roll sau duoc cong ${value || 1} diem.`
+  },
+  dice_penalty: {
+    label: 'Suy yeu',
+    mark: '-D',
+    description: (value) => `Lan roll sau bi tru ${value || 1} diem.`
+  },
+  shield: {
+    label: 'Phong thu',
+    mark: '[]',
+    description: (value) => `Nhan ${value || 1} khien chan hinh phat.`
+  },
+  move_target_back: {
+    label: 'Cong kich',
+    mark: 'X',
+    description: (value) => `Chon 1 nguoi choi lui ${value || 1} o.`
+  },
+  move_all_others_back: {
+    label: 'Khong che',
+    mark: 'ALL',
+    description: (value) => `Tat ca nguoi choi khac lui ${value || 1} o.`
+  },
+  force_skip_target: {
+    label: 'Ap che',
+    mark: '!',
+    description: () => 'Chon 1 nguoi choi mat luot.'
+  },
+  skip_turn: {
+    label: 'Bat loi',
+    mark: '!',
+    description: () => 'Mat luot tiep theo.'
+  }
+};
+
+function getRewardMeta(reward) {
+  const meta = REWARD_META[reward?.type] || {
+    label: reward?.type || 'Hieu ung',
+    mark: '*',
+    description: () => 'Kich hoat hieu ung dac biet.'
+  };
+
+  return {
+    ...meta,
+    descriptionText: meta.description(reward?.value)
+  };
+}
+
+function getRewardTier(reward, rewardDifficulty, index = null) {
+  if (rewardDifficulty) return rewardDifficulty;
+  if (reward?.id?.startsWith('hard_')) return 'hard';
+  if (reward?.id?.startsWith('medium_')) return 'medium';
+  if (reward?.id?.startsWith('easy_')) return 'easy';
+  return rewardDifficulty || 'easy';
+}
+
+function RewardCardContent({ reward, index }) {
+  const meta = getRewardMeta(reward);
+
+  return (
+    <span className="qm-card-front">
+      <span className="qm-augment-corners" aria-hidden="true" />
+      <span className="qm-augment-frame" aria-hidden="true" />
+      <span className="qm-augment-emblem" aria-hidden="true">
+        <span>{meta.mark}</span>
+      </span>
+      <strong className="qm-augment-name">{reward.name}</strong>
+      <span className="qm-reward-type">{meta.label}</span>
+      <span className="qm-augment-description">{meta.descriptionText}</span>
+      <span className="qm-augment-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+    </span>
+  );
+}
+
 export default function QuestionModal({
   visible,
   question,
@@ -22,15 +109,46 @@ export default function QuestionModal({
   rewardOptions = [],
   rewardTitle = '',
   rewardHint = '',
+  targetOptions = [],
+  targetTitle = '',
+  targetHint = '',
+  onSelectTarget,
   revealAnswer = false,
   correctAnswerIndex = null,
   selectedAnswerIndex = null,
   feedbackText = '',
   feedbackTone = 'neutral',
   rewardChoicePhase = 'preview',
-  selectedRewardChoice = null
+  selectedRewardChoice = null,
+  rewardDifficulty = 'easy'
 }) {
   if (!visible) return null;
+
+  if (mode === 'targetChoice') {
+    return (
+      <div className="qm-overlay">
+        <div className="qm-modal">
+          <h3 className="qm-title">{targetTitle || 'Chon nguoi choi'}</h3>
+          {targetHint && <p className="qm-player-info">{targetHint}</p>}
+          <div className="qm-answers qm-target-list">
+            {targetOptions.map((player) => (
+              <button
+                key={player.playerId || player.name}
+                className="qm-answer-btn qm-target-btn"
+                onClick={() => onSelectTarget?.(player)}
+                disabled={disabled}
+              >
+                <span className="qm-target-name">{player.name}</span>
+                <span className="qm-target-position">Vi tri: {player.position || 0}</span>
+              </button>
+            ))}
+          </div>
+          {!targetOptions.length && <p className="qm-disabled-msg">Khong co nguoi choi hop le de chon.</p>}
+          {disabled && <p className="qm-disabled-msg">Dang xu ly lua chon</p>}
+        </div>
+      </div>
+    );
+  }
 
   if (mode === 'difficulty') {
     return (
@@ -64,7 +182,7 @@ export default function QuestionModal({
     const isPreviewPhase = rewardChoicePhase === 'preview';
     return (
       <div className="qm-overlay">
-        <div className="qm-modal">
+        <div className="qm-modal qm-reward-modal">
           <h3 className="qm-title">{rewardTitle || 'Chọn 1 phần thưởng / hình phạt'}</h3>
           {rewardHint && <p className="qm-player-info">{rewardHint}</p>}
           {playerInfo && <p className="qm-player-info">{playerInfo}</p>}
@@ -72,10 +190,8 @@ export default function QuestionModal({
             <>
               <div className="qm-preview-grid">
                 {rewardOptions.map((reward, index) => (
-                  <div key={reward.id} className="qm-preview-card">
-                    <div className="qm-preview-card-index">#{index + 1}</div>
-                    <strong>{reward.name}</strong>
-                    {reward.type ? <span className="qm-reward-type">{reward.type}</span> : null}
+                  <div key={reward.id} className={`qm-preview-card qm-reward-tier-${getRewardTier(reward, rewardDifficulty, index)}`}>
+                    <RewardCardContent reward={reward} index={index} />
                   </div>
                 ))}
               </div>
@@ -94,16 +210,13 @@ export default function QuestionModal({
                 {rewardOptions.map((reward, index) => (
                   <button
                     key={reward.id}
-                    className={`qm-answer-btn qm-reward-card ${selectedRewardChoice?.id === reward.id ? 'revealed' : ''}`}
+                    className={`qm-answer-btn qm-reward-card revealed qm-reward-tier-${getRewardTier(reward, rewardDifficulty, index)} ${selectedRewardChoice?.id === reward.id ? 'selected' : ''}`}
                     onClick={() => onSelectReward?.(reward)}
                     disabled={disabled || !!selectedRewardChoice}
                     aria-label={`Chọn lá bài ${index + 1}`}
                   >
-                    {selectedRewardChoice?.id === reward.id ? (
-                      <span className="qm-card-front">
-                        <strong>{selectedRewardChoice.name}</strong>
-                        {selectedRewardChoice.type ? <span className="qm-reward-type">{selectedRewardChoice.type}</span> : null}
-                      </span>
+                    {(selectedRewardChoice?.id === reward.id || true) ? (
+                      <RewardCardContent reward={reward} index={index} />
                     ) : (
                       <>
                         <span className="qm-card-back">?</span>
@@ -135,6 +248,7 @@ export default function QuestionModal({
           <div className="qm-question-copy">
             <div className="qm-question-topic">{String(questionTopic).toUpperCase()}</div>
             <h3 className="qm-title qm-question-title">{question.question}</h3>
+            {question.source && <p className="qm-question-source">Nguồn: {question.source}</p>}
           </div>
         </div>
         {playerInfo && <p className="qm-player-info qm-question-player">{playerInfo}</p>}

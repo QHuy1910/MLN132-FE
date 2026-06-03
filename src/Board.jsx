@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BOARD_SIZE, PLAYER_COLORS, EVENT_CELL_INDEXES } from './constants.js';
 import { BOARD_CELL_POINTS, getBoardCellPoint } from './boardCells.js';
 import './Board.css';
@@ -28,14 +28,84 @@ const createTrackCells = (count) => {
   return result;
 };
 
-export default function Board({ players, currentPlayerIndex, boardSize = BOARD_SIZE }) {
+export default function Board({ players, currentPlayerIndex, boardSize = BOARD_SIZE, onMovementStart, onMovementComplete }) {
   const normalizedBoardSize = Math.max(2, boardSize || BOARD_SIZE);
   const spaces = createTrackCells(normalizedBoardSize);
   const eventCells = useMemo(() => new Set(EVENT_CELL_INDEXES), []);
   const showBoardDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('boardDebug');
   const [probePoint, setProbePoint] = useState(null);
+  const targetPositions = useMemo(() => players.map((player) => (
+    Math.min(Math.max(0, player.position || 0), normalizedBoardSize - 1)
+  )), [players, normalizedBoardSize]);
+  const targetPositionSignature = targetPositions.join('|');
+  const [displayPositions, setDisplayPositions] = useState(() => targetPositions);
+  const moveTimerRef = useRef(null);
+  const displayPositionsRef = useRef(targetPositions);
+
+  useEffect(() => {
+    if (moveTimerRef.current) {
+      window.clearInterval(moveTimerRef.current);
+    }
+
+    const shouldAnimate = targetPositions.some((targetPosition, index) => {
+      const currentPosition = displayPositionsRef.current[index];
+      return Number.isFinite(currentPosition) && currentPosition !== targetPosition;
+    });
+
+    setDisplayPositions((previousPositions) => {
+      const nextDisplayPositions = targetPositions.map((targetPosition, index) => {
+        const previousPosition = previousPositions[index];
+        return Number.isFinite(previousPosition)
+          ? Math.min(Math.max(0, previousPosition), normalizedBoardSize - 1)
+          : targetPosition;
+      });
+      displayPositionsRef.current = nextDisplayPositions;
+      return nextDisplayPositions;
+    });
+
+    if (shouldAnimate) {
+      onMovementStart?.();
+    }
+
+    moveTimerRef.current = window.setInterval(() => {
+      setDisplayPositions((previousPositions) => {
+        let hasMoreSteps = false;
+        const nextPositions = targetPositions.map((targetPosition, index) => {
+          const currentPosition = Number.isFinite(previousPositions[index])
+            ? Math.min(Math.max(0, previousPositions[index]), normalizedBoardSize - 1)
+            : targetPosition;
+
+          if (currentPosition === targetPosition) {
+            return currentPosition;
+          }
+
+          hasMoreSteps = true;
+          return currentPosition + Math.sign(targetPosition - currentPosition);
+        });
+
+        if (!hasMoreSteps) {
+          window.clearInterval(moveTimerRef.current);
+          moveTimerRef.current = null;
+          displayPositionsRef.current = targetPositions;
+          onMovementComplete?.();
+          return targetPositions;
+        }
+
+        displayPositionsRef.current = nextPositions;
+        return nextPositions;
+      });
+    }, 170);
+
+    return () => {
+      if (moveTimerRef.current) {
+        window.clearInterval(moveTimerRef.current);
+        moveTimerRef.current = null;
+      }
+    };
+  }, [targetPositions, targetPositionSignature, normalizedBoardSize, onMovementStart, onMovementComplete]);
+
   const occupancy = players.reduce((map, player, index) => {
-    const clampedPosition = Math.min(Math.max(0, player.position || 0), normalizedBoardSize - 1);
+    const clampedPosition = displayPositions[index] ?? targetPositions[index] ?? 0;
     if (!map.has(clampedPosition)) {
       map.set(clampedPosition, []);
     }
@@ -96,7 +166,8 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
         );
       })}
       {players.map((player, playerIdx) => {
-        const clampedPosition = Math.min(Math.max(0, player.position || 0), normalizedBoardSize - 1);
+        const targetPosition = targetPositions[playerIdx] ?? 0;
+        const clampedPosition = displayPositions[playerIdx] ?? targetPosition;
         const spacePos = spaces[clampedPosition] || spaces[0];
         const sharingPlayers = occupancy.get(clampedPosition) || [];
         const shareIndex = sharingPlayers.indexOf(playerIdx);
@@ -107,13 +178,19 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
         const offsetX = spacePos.x + offsetRadius * Math.cos(offsetAngle);
         const offsetY = spacePos.y + offsetRadius * Math.sin(offsetAngle);
         const isCurrentPlayer = playerIdx === currentPlayerIndex;
+        const isMoving = clampedPosition !== targetPosition;
         const characterIcon = player.character?.emoji || player.character?.icon || '🎮';
 
         return (
-          <g key={`player-${playerIdx}`} className={`player-token ${isCurrentPlayer ? 'current' : ''}`}>
+          <g
+            key={`player-${player.playerId || player.name || playerIdx}`}
+            className="player-token-position"
+            style={{ transform: `translate(${offsetX}px, ${offsetY}px)` }}
+          >
+          <g className={`player-token ${isCurrentPlayer ? 'current' : ''} ${isMoving ? 'moving' : ''}`}>
             <circle
-              cx={offsetX}
-              cy={offsetY}
+              cx="0"
+              cy="0"
               r="15"
               fill="white"
               stroke={isCurrentPlayer ? '#FFD700' : '#ddd'}
@@ -123,8 +200,8 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
             />
 
             <text
-              x={offsetX}
-              y={offsetY}
+              x="0"
+              y="0"
               textAnchor="middle"
               dy="0.3em"
               fontSize="15"
@@ -136,13 +213,14 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
             </text>
 
             <circle
-              cx={offsetX + 10}
-              cy={offsetY - 10}
+              cx="10"
+              cy="-10"
               r="6"
               fill={PLAYER_COLORS[playerIdx % PLAYER_COLORS.length]}
               stroke="white"
               strokeWidth="2"
             />
+          </g>
           </g>
         );
       })}

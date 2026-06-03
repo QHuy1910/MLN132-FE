@@ -75,8 +75,21 @@
   fill: #fff7d9;
 }
 
+.player-token-position {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 165ms ease-in-out;
+  will-change: transform;
+}
+
 .player-token {
+  transform-box: fill-box;
+  transform-origin: center;
   animation: float 3s ease-in-out infinite;
+}
+
+.player-token.moving {
+  animation: step-hop 170ms ease-in-out infinite;
 }
 
 .player-circle {
@@ -116,6 +129,18 @@
   }
   50% {
     transform: translateY(-5px);
+  }
+}
+
+@keyframes step-hop {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-9px) scale(1.06);
+  }
+  75% {
+    transform: translateY(1px) scale(0.98);
   }
 }
 

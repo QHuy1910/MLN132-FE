@@ -1,7 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Dice.css';
 
 export default function Dice({ onRoll, values, total, isRolling, disabled, loading, showRollButton = true }) {
+  const [rollingValues, setRollingValues] = useState([1, 1]);
+
+  useEffect(() => {
+    if (!isRolling) return undefined;
+
+    const randomizeDice = () => {
+      setRollingValues([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ]);
+    };
+
+    randomizeDice();
+    const intervalId = window.setInterval(randomizeDice, 55);
+    return () => window.clearInterval(intervalId);
+  }, [isRolling]);
+
+  const displayValues = isRolling ? rollingValues : (values || [1, 1]);
+  const hasResult = !!values && !isRolling;
 
   const handleRoll = async () => {
     if (disabled || isRolling || loading) return;
@@ -15,21 +34,24 @@ export default function Dice({ onRoll, values, total, isRolling, disabled, loadi
   };
 
   return (
-    <div className="dice-container">
-      <div className="dice-pair">
-        <div className={`dice ${isRolling ? 'rolling' : ''}`}>
-          <svg viewBox="0 0 100 100" width="100" height="100">
-            <rect x="10" y="10" width="80" height="80" fill="#FFD700" stroke="#FF8C00" strokeWidth="2" rx="8" />
-            {renderDots(values?.[0] || 1)}
-          </svg>
+    <div className={`dice-container ${isRolling ? 'rolling' : ''} ${hasResult ? 'has-result' : ''}`}>
+      <div className="dice-arena" aria-live="polite">
+        <div className="dice-vortex" />
+        <div className="dice-sparks" aria-hidden="true">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <span key={`spark-${index}`} className="dice-spark" />
+          ))}
         </div>
+        <div className="dice-pair">
+          <div className={`dice dice-one ${isRolling ? 'rolling' : ''} ${hasResult ? 'settled' : ''}`}>
+            {renderDiceCube(displayValues[0])}
+          </div>
 
-        <div className={`dice ${isRolling ? 'rolling' : ''}`} style={{ animationDelay: '0.1s' }}>
-          <svg viewBox="0 0 100 100" width="100" height="100">
-            <rect x="10" y="10" width="80" height="80" fill="#FFD700" stroke="#FF8C00" strokeWidth="2" rx="8" />
-            {renderDots(values?.[1] || 1)}
-          </svg>
+          <div className={`dice dice-two ${isRolling ? 'rolling' : ''} ${hasResult ? 'settled' : ''}`}>
+            {renderDiceCube(displayValues[1])}
+          </div>
         </div>
+        <div className="dice-result-burst" aria-hidden="true" />
       </div>
       
       <div className="dice-info">
@@ -60,29 +82,33 @@ export default function Dice({ onRoll, values, total, isRolling, disabled, loadi
   );
 }
 
-function renderDots(value) {
-  const dots = [];
-  const dotRadius = 4;
+function renderDiceCube(value) {
+  return (
+    <div className="dice-cube" aria-label={`Xuc xac ${value}`}>
+      <div className="dice-cube-face dice-cube-front">
+        <span className="dice-face-shine" />
+        {renderPips(value)}
+      </div>
+      <div className="dice-cube-face dice-cube-back">{renderPips(6)}</div>
+      <div className="dice-cube-face dice-cube-right">{renderPips(3)}</div>
+      <div className="dice-cube-face dice-cube-left">{renderPips(4)}</div>
+      <div className="dice-cube-face dice-cube-top">{renderPips(2)}</div>
+      <div className="dice-cube-face dice-cube-bottom">{renderPips(5)}</div>
+    </div>
+  );
+}
+
+function renderPips(value) {
   const positions = {
-    1: [[50, 50]],
-    2: [[30, 30], [70, 70]],
-    3: [[30, 30], [50, 50], [70, 70]],
-    4: [[30, 30], [70, 30], [30, 70], [70, 70]],
-    5: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70]],
-    6: [[30, 25], [70, 25], [30, 50], [70, 50], [30, 75], [70, 75]]
+    1: ['center'],
+    2: ['top-left', 'bottom-right'],
+    3: ['top-left', 'center', 'bottom-right'],
+    4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+    5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'],
+    6: ['top-left', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-right']
   };
 
-  (positions[value] || positions[1]).forEach((pos, idx) => {
-    dots.push(
-      <circle
-        key={`dot-${idx}`}
-        cx={pos[0]}
-        cy={pos[1]}
-        r={dotRadius}
-        fill="#FF8C00"
-      />
-    );
-  });
-
-  return dots;
+  return (positions[value] || positions[1]).map((position, index) => (
+    <span key={`pip-${position}-${index}`} className={`dice-pip ${position}`} />
+  ));
 }

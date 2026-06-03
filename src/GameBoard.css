@@ -336,6 +336,21 @@
   line-height: 1;
 }
 
+.player-finished-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0 6px 5px 0;
+  padding: 3px 7px;
+  border: 1px solid rgba(250, 204, 21, 0.8);
+  border-radius: 999px;
+  background: rgba(146, 64, 14, 0.78);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .player-stats p {
   margin: 0;
 }
