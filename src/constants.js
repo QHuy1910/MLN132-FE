@@ -15,6 +15,8 @@ export const PLAYER_ROLES = {
   SPECTATOR: 'spectator'
 };
 
+export const MAX_PLAYERS_PER_ROOM = 5;
+
 export const SOCKET_EVENTS = {
   JOIN_ROOM: 'joinRoom',
   JOIN_AS_SPECTATOR: 'joinAsSpectator',
@@ -41,8 +43,11 @@ export const SOCKET_EVENTS = {
   RESOLVE_EVENT_QUESTION: 'resolveEventQuestion',
   EVENT_REWARD_CHOICES: 'eventRewardChoices',
   EVENT_REWARD_SHUFFLED: 'eventRewardShuffled',
+  EVENT_ACTION_PREVIEW: 'eventActionPreview',
   CHOOSE_EVENT_REWARD: 'chooseEventReward',
   EVENT_REWARD_APPLIED: 'eventRewardApplied',
+  UPDATE_PLAYER_POSITIONS: 'updatePlayerPositions',
+  PLAYER_POSITIONS_UPDATED: 'playerPositionsUpdated',
   ERROR: 'error',
   GAME_STATE: 'gameState'
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api.js';
 import { useGame } from './GameContext.jsx';
-import { PLAYER_ROLES, ROOM_STATUS } from './constants.js';
+import { MAX_PLAYERS_PER_ROOM, PLAYER_ROLES, ROOM_STATUS } from './constants.js';
 import CharacterSelection from './CharacterSelection.jsx';
 import './HomePage.css';
 
@@ -86,7 +86,7 @@ export default function HomePage() {
 
       let room;
       if (pendingAction === 'create') {
-        room = await api.createRoom(newRoomName, playerNameInput, 4, selectedCharacter);
+        room = await api.createRoom(newRoomName, playerNameInput, MAX_PLAYERS_PER_ROOM, selectedCharacter);
       } else {
         if (roleSelection === PLAYER_ROLES.SPECTATOR) {
           room = await api.joinAsSpectator(selectedRoom._id, playerNameInput);
@@ -122,8 +122,8 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <div className="home-container">
-        <h1>🎲 Monopoly Game</h1>
-        <p className="subtitle">Chơi Monopoly với bạn bè</p>
+        <h1>Hành Trình Chống Bạo Lực Gia Đình</h1>
+        <p className="subtitle">Cùng nhau nhận diện, phòng tránh và lên tiếng</p>
 
         <div className="action-buttons">
           <button

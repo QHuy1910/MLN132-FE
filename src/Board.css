@@ -54,6 +54,30 @@
   stroke-linejoin: round;
 }
 
+.trap-cell-marker {
+  pointer-events: none;
+}
+
+.trap-cell-marker text,
+.trap-target-cell text {
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.75);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  user-select: none;
+  pointer-events: none;
+}
+
+.trap-target-cell {
+  cursor: pointer;
+}
+
+.trap-target-cell:hover circle,
+.trap-target-cell:focus-visible circle {
+  fill: rgba(239, 68, 68, 0.3);
+  stroke-width: 3px;
+}
+
 .board-svg {
   width: 100%;
   aspect-ratio: 1140 / 720;
@@ -90,6 +114,21 @@
 
 .player-token.moving {
   animation: step-hop 170ms ease-in-out infinite;
+}
+
+.player-name-tag {
+  pointer-events: none;
+}
+
+.player-name-tag-text {
+  fill: #111827;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 2px;
+  stroke-linejoin: round;
 }
 
 .player-circle {

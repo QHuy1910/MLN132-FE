@@ -16,9 +16,10 @@
 .home-page h1 {
   text-align: center;
   color: white;
-  font-size: 3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
   margin: 40px 0 10px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.12;
 }
 
 .subtitle {

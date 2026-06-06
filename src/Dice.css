@@ -586,6 +586,17 @@
   color: #FFD700;
 }
 
+.dice-modifier {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #fee2e2;
+}
+
+.dice-modifier.penalty {
+  color: #fecaca;
+}
+
 .btn-roll {
   padding: 10px 18px;
   background-color: #FF9800;
@@ -653,6 +664,11 @@
     white-space: nowrap;
   }
 
+  .dice-modifier {
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
   .btn-roll {
     min-width: 118px;
     min-height: 42px;
@@ -695,6 +711,10 @@
 
   .dice-value {
     font-size: 1.15rem;
+  }
+
+  .dice-modifier {
+    font-size: 0.66rem;
   }
 
   .btn-roll {

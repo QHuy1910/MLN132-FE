@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from './constants.js';
+import { API_ENDPOINTS, MAX_PLAYERS_PER_ROOM } from './constants.js';
 
 const ENV_SERVER_URL = import.meta.env.VITE_API_BASE_URL;
 let SERVER_URL = ENV_SERVER_URL || 'http://localhost:3000';
@@ -76,7 +76,7 @@ export const api = {
     return apiCall(API_ENDPOINTS.ROOM_BY_ID(id));
   },
 
-  async createRoom(name, host, maxPlayers = 4, character) {
+  async createRoom(name, host, maxPlayers = MAX_PLAYERS_PER_ROOM, character) {
     return apiCall(API_ENDPOINTS.CREATE_ROOM, {
       method: 'POST',
       body: JSON.stringify({ name, host, maxPlayers, character })

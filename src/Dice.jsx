@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import './Dice.css';
 
-export default function Dice({ onRoll, values, total, isRolling, disabled, loading, showRollButton = true }) {
+const formatDiceResult = (values, total, modifier = 0) => {
+  if (!values) return '-';
+
+  const baseTotal = values[0] + values[1];
+  const normalizedModifier = Number(modifier || 0);
+  const modifierText = normalizedModifier === 0
+    ? ''
+    : ` ${normalizedModifier > 0 ? '+' : '-'} ${Math.abs(normalizedModifier)}`;
+
+  return `${values[0]} + ${values[1]}${modifierText} = ${total ?? Math.max(1, baseTotal + normalizedModifier)}`;
+};
+
+export default function Dice({ onRoll, values, total, modifier = 0, isRolling, disabled, loading, showRollButton = true }) {
   const [rollingValues, setRollingValues] = useState([1, 1]);
 
   useEffect(() => {
@@ -63,7 +75,10 @@ export default function Dice({ onRoll, values, total, isRolling, disabled, loadi
         ) : (
           <>
             <p className="dice-label">Kết quả xúc xắc</p>
-            <p className="dice-value">{values ? `${values[0]} + ${values[1]} = ${total ?? values[0] + values[1]}` : '-'}</p>
+            <p className="dice-value">{formatDiceResult(values, total, modifier)}</p>
+            {Number(modifier || 0) < 0 && (
+              <p className="dice-modifier penalty">Bị trừ {Math.abs(Number(modifier))} khi roll</p>
+            )}
           </>
         )}
       </div>
@@ -112,3 +127,5 @@ function renderPips(value) {
     <span key={`pip-${position}-${index}`} className={`dice-pip ${position}`} />
   ));
 }
+
+export { formatDiceResult };

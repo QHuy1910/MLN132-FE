@@ -36,33 +36,105 @@
         "name": "Nhận khiên",
         "type": "shield",
         "value": 1
+      },
+      {
+        "id": "easy_trap_back_1",
+        "name": "Dat bay: ai vao lui 1 o",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_back_1",
+          "name": "Lui 1 o",
+          "type": "move_self_back",
+          "value": 1
+        }
+      },
+      {
+        "id": "easy_trap_back_2",
+        "name": "Dat bay: ai vao lui 2 o",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_back_2",
+          "name": "Lui 2 o",
+          "type": "move_self_back",
+          "value": 2
+        }
+      },
+      {
+        "id": "easy_trap_dice_penalty_1",
+        "name": "Dat bay: ai vao roll sau -1",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_dice_penalty_1",
+          "name": "Roll sau -1",
+          "type": "dice_penalty",
+          "value": 1
+        }
+      },
+      {
+        "id": "easy_trap_dice_penalty_2",
+        "name": "Dat bay: ai vao roll sau -2",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_dice_penalty_2",
+          "name": "Roll sau -2",
+          "type": "dice_penalty",
+          "value": 2
+        }
       }
     ],
 
     "failure": [
       {
-        "id": "easy_back_1",
-        "name": "Lùi 1 ô",
-        "type": "move_self_back",
-        "value": 1
+        "id": "easy_failure_trap_back_1",
+        "name": "Dat bay: ai vao lui 1 o",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_back_1",
+          "name": "Lui 1 o",
+          "type": "move_self_back",
+          "value": 1
+        }
       },
       {
-        "id": "easy_back_2",
-        "name": "Lùi 2 ô",
-        "type": "move_self_back",
-        "value": 2
+        "id": "easy_failure_trap_back_2",
+        "name": "Dat bay: ai vao lui 2 o",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_back_2",
+          "name": "Lui 2 o",
+          "type": "move_self_back",
+          "value": 2
+        }
       },
       {
-        "id": "easy_dice_penalty_1",
-        "name": "Roll sau -1",
-        "type": "dice_penalty",
-        "value": 1
+        "id": "easy_failure_trap_dice_penalty_1",
+        "name": "Dat bay: ai vao roll sau -1",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_dice_penalty_1",
+          "name": "Roll sau -1",
+          "type": "dice_penalty",
+          "value": 1
+        }
       },
       {
-        "id": "easy_dice_penalty_2",
-        "name": "Roll sau -2",
-        "type": "dice_penalty",
-        "value": 2
+        "id": "easy_failure_trap_dice_penalty_2",
+        "name": "Dat bay: ai vao roll sau -2",
+        "type": "place_trap",
+        "trapDifficulty": "easy",
+        "trapPenalty": {
+          "id": "easy_dice_penalty_2",
+          "name": "Roll sau -2",
+          "type": "dice_penalty",
+          "value": 2
+        }
       }
     ]
   },
@@ -122,33 +194,105 @@
         "name": "Nhận khiên",
         "type": "shield",
         "value": 1
+      },
+      {
+        "id": "medium_trap_back_3",
+        "name": "Dat bay: ai vao lui 3 o",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_back_3",
+          "name": "Lui 3 o",
+          "type": "move_self_back",
+          "value": 3
+        }
+      },
+      {
+        "id": "medium_trap_back_4",
+        "name": "Dat bay: ai vao lui 4 o",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_back_4",
+          "name": "Lui 4 o",
+          "type": "move_self_back",
+          "value": 4
+        }
+      },
+      {
+        "id": "medium_trap_dice_penalty_3",
+        "name": "Dat bay: ai vao roll sau -3",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_penalty_3",
+          "name": "Roll sau -3",
+          "type": "dice_penalty",
+          "value": 3
+        }
+      },
+      {
+        "id": "medium_trap_dice_penalty_4",
+        "name": "Dat bay: ai vao roll sau -4",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_penalty_4",
+          "name": "Roll sau -4",
+          "type": "dice_penalty",
+          "value": 4
+        }
       }
     ],
 
     "failure": [
       {
-        "id": "medium_back_3",
-        "name": "Lùi 3 ô",
-        "type": "move_self_back",
-        "value": 3
+        "id": "medium_failure_trap_back_3",
+        "name": "Dat bay: ai vao lui 3 o",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_back_3",
+          "name": "Lui 3 o",
+          "type": "move_self_back",
+          "value": 3
+        }
       },
       {
-        "id": "medium_back_4",
-        "name": "Lùi 4 ô",
-        "type": "move_self_back",
-        "value": 4
+        "id": "medium_failure_trap_back_4",
+        "name": "Dat bay: ai vao lui 4 o",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_back_4",
+          "name": "Lui 4 o",
+          "type": "move_self_back",
+          "value": 4
+        }
       },
       {
-        "id": "medium_penalty_3",
-        "name": "Roll sau -3",
-        "type": "dice_penalty",
-        "value": 3
+        "id": "medium_failure_trap_dice_penalty_3",
+        "name": "Dat bay: ai vao roll sau -3",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_penalty_3",
+          "name": "Roll sau -3",
+          "type": "dice_penalty",
+          "value": 3
+        }
       },
       {
-        "id": "medium_penalty_4",
-        "name": "Roll sau -4",
-        "type": "dice_penalty",
-        "value": 4
+        "id": "medium_failure_trap_dice_penalty_4",
+        "name": "Dat bay: ai vao roll sau -4",
+        "type": "place_trap",
+        "trapDifficulty": "medium",
+        "trapPenalty": {
+          "id": "medium_penalty_4",
+          "name": "Roll sau -4",
+          "type": "dice_penalty",
+          "value": 4
+        }
       }
     ]
   },
@@ -214,39 +358,129 @@
         "name": "Nhận khiên",
         "type": "shield",
         "value": 1
+      },
+      {
+        "id": "hard_trap_back_8",
+        "name": "Dat bay: ai vao lui 8 o",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_back_8",
+          "name": "Lui 8 o",
+          "type": "move_self_back",
+          "value": 8
+        }
+      },
+      {
+        "id": "hard_trap_back_10",
+        "name": "Dat bay: ai vao lui 10 o",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_back_10",
+          "name": "Lui 10 o",
+          "type": "move_self_back",
+          "value": 10
+        }
+      },
+      {
+        "id": "hard_trap_skip",
+        "name": "Dat bay: ai vao mat luot",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_skip",
+          "name": "Mat luot",
+          "type": "skip_turn",
+          "value": 1
+        }
+      },
+      {
+        "id": "hard_trap_dice_penalty_5",
+        "name": "Dat bay: ai vao roll sau -5",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_penalty_5",
+          "name": "Roll sau -5",
+          "type": "dice_penalty",
+          "value": 5
+        }
+      },
+      {
+        "id": "hard_trap_dice_penalty_6",
+        "name": "Dat bay: ai vao roll sau -6",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_penalty_6",
+          "name": "Roll sau -6",
+          "type": "dice_penalty",
+          "value": 6
+        }
       }
     ],
 
     "failure": [
       {
-        "id": "hard_back_8",
-        "name": "Lùi 8 ô",
-        "type": "move_self_back",
-        "value": 8
+        "id": "hard_failure_trap_back_8",
+        "name": "Dat bay: ai vao lui 8 o",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_back_8",
+          "name": "Lui 8 o",
+          "type": "move_self_back",
+          "value": 8
+        }
       },
       {
-        "id": "hard_back_10",
-        "name": "Lùi 10 ô",
-        "type": "move_self_back",
-        "value": 10
+        "id": "hard_failure_trap_back_10",
+        "name": "Dat bay: ai vao lui 10 o",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_back_10",
+          "name": "Lui 10 o",
+          "type": "move_self_back",
+          "value": 10
+        }
       },
       {
-        "id": "hard_skip",
-        "name": "Mất lượt",
-        "type": "skip_turn",
-        "value": 1
+        "id": "hard_failure_trap_skip",
+        "name": "Dat bay: ai vao mat luot",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_skip",
+          "name": "Mat luot",
+          "type": "skip_turn",
+          "value": 1
+        }
       },
       {
-        "id": "hard_penalty_5",
-        "name": "Roll sau -5",
-        "type": "dice_penalty",
-        "value": 5
+        "id": "hard_failure_trap_dice_penalty_5",
+        "name": "Dat bay: ai vao roll sau -5",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_penalty_5",
+          "name": "Roll sau -5",
+          "type": "dice_penalty",
+          "value": 5
+        }
       },
       {
-        "id": "hard_penalty_6",
-        "name": "Roll sau -6",
-        "type": "dice_penalty",
-        "value": 6
+        "id": "hard_failure_trap_dice_penalty_6",
+        "name": "Dat bay: ai vao roll sau -6",
+        "type": "place_trap",
+        "trapDifficulty": "hard",
+        "trapPenalty": {
+          "id": "hard_penalty_6",
+          "name": "Roll sau -6",
+          "type": "dice_penalty",
+          "value": 6
+        }
       }
     ]
   }

@@ -105,6 +105,53 @@
   margin: 0 0 12px 0;
 }
 
+.qm-notice-modal {
+  width: min(90vw, 460px);
+  padding: 28px 30px 26px;
+}
+
+.qm-notice-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #feecec;
+  color: #e02424;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.qm-notice-message {
+  color: #333;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.qm-confirm-btn {
+  min-width: 132px;
+  margin-top: 6px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 6px;
+  background: #e02424;
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.qm-confirm-btn:hover:not(:disabled) {
+  background: #c91f1f;
+}
+
+.qm-confirm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .qm-answers {
   display: flex;
   flex-direction: column;

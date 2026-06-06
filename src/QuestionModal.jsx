@@ -48,6 +48,11 @@ const REWARD_META = {
     mark: '!',
     description: () => 'Chon 1 nguoi choi mat luot.'
   },
+  place_trap: {
+    label: 'Bay',
+    mark: '!!',
+    description: () => 'Chon hinh phat va dat bay len mot o thuong.'
+  },
   skip_turn: {
     label: 'Bat loi',
     mark: '!',
@@ -64,7 +69,9 @@ function getRewardMeta(reward) {
 
   return {
     ...meta,
-    descriptionText: meta.description(reward?.value)
+    descriptionText: reward?.type === 'place_trap' && reward?.trapPenalty
+      ? `Dat bay: ${reward.trapPenalty.name}`
+      : meta.description(reward?.value)
   };
 }
 
@@ -120,9 +127,36 @@ export default function QuestionModal({
   feedbackTone = 'neutral',
   rewardChoicePhase = 'preview',
   selectedRewardChoice = null,
-  rewardDifficulty = 'easy'
+  rewardDifficulty = 'easy',
+  noticeTitle = '',
+  noticeMessage = '',
+  confirmText = 'Xac nhan',
+  onConfirm,
+  showConfirm = true
 }) {
   if (!visible) return null;
+
+  if (mode === 'notice') {
+    return (
+      <div className="qm-overlay">
+        <div className="qm-modal qm-notice-modal">
+          <div className="qm-notice-icon">!</div>
+          <h3 className="qm-title">{noticeTitle || 'Thong bao'}</h3>
+          {noticeMessage && <p className="qm-player-info qm-notice-message">{noticeMessage}</p>}
+          {playerInfo && <p className="qm-player-info">{playerInfo}</p>}
+          {showConfirm && (
+            <button
+              className="qm-confirm-btn"
+              onClick={() => onConfirm?.()}
+              disabled={disabled}
+            >
+              {confirmText}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (mode === 'targetChoice') {
     return (

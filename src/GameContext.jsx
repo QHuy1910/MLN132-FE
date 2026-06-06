@@ -28,23 +28,26 @@ export const GameProvider = ({ children, socket }) => {
       },
       [SOCKET_EVENTS.GAME_STARTED]: (data) => {
         setGameState(data);
-        setCurrentRoom(prev => prev ? { ...prev, status: 'playing', players: data.players } : null);
+        setCurrentRoom(prev => prev ? { ...prev, status: 'playing', players: data.players, traps: data.traps || [] } : null);
       },
       [SOCKET_EVENTS.SHOW_QUESTION]: (data) => {
         setShownQuestion(data.question);
       },
       [SOCKET_EVENTS.DICE_ROLLED]: (data) => {
+        setShownQuestion(null);
         setGameState(prev => prev ? { ...prev, lastDiceValue: data.diceValue } : null);
       },
       [SOCKET_EVENTS.PLAYER_MOVED]: (data) => {
         setCurrentRoom(prev => prev ? {
           ...prev,
           players: data.players,
+          traps: data.traps || prev.traps || [],
           status: data.status || prev.status
         } : null);
         setGameState(prev => prev ? {
           ...prev,
           players: data.players,
+          traps: data.traps || prev.traps || [],
           status: data.status || prev.status,
           winner: data.winner || prev.winner,
           boardSize: data.boardSize || prev.boardSize
@@ -54,6 +57,7 @@ export const GameProvider = ({ children, socket }) => {
         setCurrentRoom(prev => prev ? {
           ...prev,
           players: data.players,
+          traps: data.traps || prev.traps || [],
           status: data.status || prev.status
         } : null);
         setGameState(prev => prev ? { 
@@ -61,9 +65,28 @@ export const GameProvider = ({ children, socket }) => {
           currentTurnIndex: data.currentTurnIndex,
           currentPlayer: data.currentPlayer,
           players: data.players,
+          traps: data.traps || prev.traps || [],
           hasRolledThisTurn: data.hasRolledThisTurn,
           status: data.status || prev.status,
           winner: data.winner || prev.winner
+        } : null);
+      },
+      [SOCKET_EVENTS.PLAYER_POSITIONS_UPDATED]: (data) => {
+        setCurrentRoom(prev => prev ? {
+          ...prev,
+          players: data.players || prev.players,
+          spectators: data.spectators || prev.spectators,
+          traps: data.traps || prev.traps || [],
+          status: data.status || prev.status
+        } : null);
+        setGameState(prev => prev ? {
+          ...prev,
+          players: data.players || prev.players,
+          currentTurnIndex: data.currentTurnIndex ?? prev.currentTurnIndex,
+          currentPlayer: data.currentPlayer || prev.currentPlayer,
+          traps: data.traps || prev.traps || [],
+          status: data.status || prev.status,
+          boardSize: data.boardSize || prev.boardSize
         } : null);
       },
       [SOCKET_EVENTS.PLAYER_LEFT]: (data) => {

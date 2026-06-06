@@ -4,10 +4,10 @@
     "difficulty": "medium",
     "question": "Theo báo Dân trí năm 2023 có bao nhiêu nam giới là nạn nhân bạo lực gia đình?",
     "answers": [
-      "120",
+      "125",
       "565",
-      "1.200",
-      "3.240"
+      "1.265",
+      "3.245"
     ],
     "correctAnswer": 1,
     "source": "“565 nam giới bị bạo lực gia đình, có dấu hiệu tăng lên” – Báo Dân trí"
@@ -17,10 +17,10 @@
     "difficulty": "medium",
     "question": "Theo báo cáo được nhắc trong bài báo, nam giới chiếm bao nhiêu phần trăm nạn nhân bạo lực gia đình năm 2023?",
     "answers": [
-      "5%",
-      "10%",
+      "5,7%",
+      "10,7%",
       "17,7%",
-      "50%"
+      "19,7%"
     ],
     "correctAnswer": 2,
     "source": "“565 nam giới bị bạo lực gia đình, có dấu hiệu tăng lên” – Báo Dân trí"
@@ -56,10 +56,10 @@
     "difficulty": "medium",
     "question": "Theo bài báo của Tuổi Trẻ, số vụ bạo lực gia đình năm 2023 là hơn bao nhiêu vụ?",
     "answers": [
-      "500 vụ",
-      "1.000 vụ",
+      "240 vụ",
+      "1.240 vụ",
       "3.240 vụ",
-      "10.000 vụ"
+      "5.240 vụ"
     ],
     "correctAnswer": 2,
     "source": "“Báo cáo của Chính phủ: Tỉ lệ nam giới bị bạo lực gia đình có dấu hiệu tăng” – Tuổi Trẻ"
@@ -150,7 +150,7 @@
       "50 vụ",
       "110 vụ",
       "230 vụ",
-      "1.000 vụ"
+      "1.050 vụ"
     ],
     "correctAnswer": 2,
     "source": "“565 nam giới bị bạo lực gia đình, có dấu hiệu tăng lên” – Báo Dân trí"
@@ -176,7 +176,7 @@
       "Bộ trưởng Đào Ngọc Dung",
       "Chủ tịch nước",
       "Bộ trưởng Giáo dục",
-      "Bộ trưởng Côngan"
+      "Bộ trưởng Công an"
     ],
     "correctAnswer": 0,
     "source": "“Báo cáo của Chính phủ: Tỉ lệ nam giới bị bạo lực gia đình có dấu hiệu tăng” – Tuổi Trẻ"
@@ -533,19 +533,6 @@
     "source": "“Nam giới bị bạo lực gia đình có dấu hiệu gia tăng” – VOV2"
   },
   {
-    "id": 42,
-    "difficulty": "medium",
-    "question": "Theo Thanh Niên, số vụ bạo lực gia đình năm 2023 là hơn bao nhiêu vụ?",
-    "answers": [
-      "500 vụ",
-      "1.000 vụ",
-      "3.240 vụ",
-      "10.000 vụ"
-    ],
-    "correctAnswer": 2,
-    "source": "“Bộ trưởng LĐ-TB-XH: Nam giới bị bạo lực gia đình ngày càng tăng” – Thanh Niên"
-  },
-  {
     "id": 43,
     "difficulty": "medium",
     "question": "Theo Báo Pháp Luật Việt Nam, nam giới bị bạo lực thường sợ điều gì?",
@@ -622,19 +609,6 @@
     ],
     "correctAnswer": 0,
     "source": "“Nam giới bị bạo lực gia đình có dấu hiệu gia tăng” – VOV2"
-  },
-  {
-    "id": 49,
-    "difficulty": "medium",
-    "question": "Theo Báo Pháp Luật Việt Nam, nam giới bị bạo lực có cần được hỗ trợ không?",
-    "answers": [
-      "Có",
-      "Không",
-      "Chỉ trẻ em cần",
-      "Chỉ phụ nữ cần"
-    ],
-    "correctAnswer": 0,
-    "source": "“Xóa bỏ bạo lực gia đình đối với nam giới - Bài 1: Người trong cuộc cần ‘cởi bỏ’ định kiến” – Báo Pháp Luật Việt Nam"
   },
   {
     "id": 50,

@@ -28,10 +28,24 @@ const createTrackCells = (count) => {
   return result;
 };
 
-export default function Board({ players, currentPlayerIndex, boardSize = BOARD_SIZE, onMovementStart, onMovementComplete }) {
+export default function Board({
+  players,
+  currentPlayerIndex,
+  boardSize = BOARD_SIZE,
+  traps = [],
+  trapPlacement = null,
+  onSelectTrapCell,
+  onMovementStart,
+  onMovementComplete
+}) {
   const normalizedBoardSize = Math.max(2, boardSize || BOARD_SIZE);
   const spaces = createTrackCells(normalizedBoardSize);
   const eventCells = useMemo(() => new Set(EVENT_CELL_INDEXES), []);
+  const trapCountsByCell = useMemo(() => (traps || []).reduce((counts, trap) => {
+    const cellIndex = Number(trap.cellIndex);
+    counts.set(cellIndex, (counts.get(cellIndex) || 0) + 1);
+    return counts;
+  }, new Map()), [traps]);
   const showBoardDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('boardDebug');
   const [probePoint, setProbePoint] = useState(null);
   const targetPositions = useMemo(() => players.map((player) => (
@@ -143,6 +157,11 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
     <div className="board-stage" role="img" aria-label="Game map" onMouseMove={handleMouseMove} onMouseLeave={() => setProbePoint(null)}>
       <img className="board-image" src={mapImage} alt="Game map" draggable="false" />
       <svg className="board-overlay" viewBox={`0 0 ${IMAGE_WIDTH} ${IMAGE_HEIGHT}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0f172a" floodOpacity="0.28" />
+        </filter>
+      </defs>
       {showBoardDebug && boardDebugCells.map((cell) => {
         const point = cell.point;
 
@@ -165,6 +184,43 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
           </g>
         );
       })}
+      {[...trapCountsByCell.entries()].map(([cellIndex, trapCount]) => {
+        const spacePos = spaces[cellIndex];
+        if (!spacePos) return null;
+
+        return (
+          <g key={`trap-${cellIndex}`} className="trap-cell-marker" aria-label={`Trap cell ${cellIndex}`}>
+            <circle cx={spacePos.x} cy={spacePos.y} r="10" fill="#ef4444" stroke="#fff7ed" strokeWidth="2" opacity="0.94" />
+            <text x={spacePos.x} y={spacePos.y + 4} textAnchor="middle" fill="#fff7ed" fontSize="11" fontWeight="900">
+              {trapCount > 1 ? trapCount : '!'}
+            </text>
+          </g>
+        );
+      })}
+      {trapPlacement?.active && spaces.map((spacePos, index) => {
+        const disabledCell = eventCells.has(index);
+        if (disabledCell) return null;
+
+        return (
+          <g
+            key={`trap-target-${index}`}
+            className="trap-target-cell"
+            role="button"
+            tabIndex={0}
+            aria-label={`Dat bay o o ${index}`}
+            onClick={() => onSelectTrapCell?.(index)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelectTrapCell?.(index);
+              }
+            }}
+          >
+            <circle cx={spacePos.x} cy={spacePos.y} r="14" fill="rgba(239, 68, 68, 0.18)" stroke="#ef4444" strokeWidth="2" strokeDasharray="5 4" />
+            <text x={spacePos.x} y={spacePos.y + 4} textAnchor="middle" fill="#991b1b" fontSize="10" fontWeight="900">+</text>
+          </g>
+        );
+      })}
       {players.map((player, playerIdx) => {
         const targetPosition = targetPositions[playerIdx] ?? 0;
         const clampedPosition = displayPositions[playerIdx] ?? targetPosition;
@@ -180,6 +236,9 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
         const isCurrentPlayer = playerIdx === currentPlayerIndex;
         const isMoving = clampedPosition !== targetPosition;
         const characterIcon = player.character?.emoji || player.character?.icon || '🎮';
+        const playerLabel = player.name || `P${playerIdx + 1}`;
+        const displayName = playerLabel.length > 14 ? `${playerLabel.slice(0, 13)}...` : playerLabel;
+        const labelWidth = Math.min(Math.max(displayName.length * 7 + 18, 44), 120);
 
         return (
           <g
@@ -188,6 +247,28 @@ export default function Board({ players, currentPlayerIndex, boardSize = BOARD_S
             style={{ transform: `translate(${offsetX}px, ${offsetY}px)` }}
           >
           <g className={`player-token ${isCurrentPlayer ? 'current' : ''} ${isMoving ? 'moving' : ''}`}>
+            <g className="player-name-tag">
+              <rect
+                x={-labelWidth / 2}
+                y="-60"
+                width={labelWidth}
+                height="22"
+                rx="7"
+                fill={isCurrentPlayer ? '#fff7cc' : 'rgba(255, 255, 255, 0.94)'}
+                stroke={isCurrentPlayer ? '#f59e0b' : PLAYER_COLORS[playerIdx % PLAYER_COLORS.length]}
+                strokeWidth="1.5"
+                filter="url(#softShadow)"
+              />
+              <text
+                x="0"
+                y="-45"
+                textAnchor="middle"
+                className="player-name-tag-text"
+              >
+                {displayName}
+              </text>
+            </g>
+
             <circle
               cx="0"
               cy="0"
