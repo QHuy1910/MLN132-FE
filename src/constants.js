@@ -37,6 +37,8 @@ export const SOCKET_EVENTS = {
   PLAYER_LEFT: 'playerLeft',
   SPECTATOR_LEFT: 'spectatorLeft',
   PLAYER_READY_CHANGED: 'playerReadyChanged',
+  REQUEST_QUESTION: 'requestQuestion',
+  ANSWER_QUESTION: 'answerQuestion',
   SHOW_QUESTION: 'showQuestion',
   QUESTION_ANSWER_REVEALED: 'questionAnswerRevealed',
   EVENT_CELL_LANDED: 'eventCellLanded',
@@ -48,6 +50,8 @@ export const SOCKET_EVENTS = {
   EVENT_REWARD_APPLIED: 'eventRewardApplied',
   UPDATE_PLAYER_POSITIONS: 'updatePlayerPositions',
   PLAYER_POSITIONS_UPDATED: 'playerPositionsUpdated',
+  SET_TRAP_VISIBILITY: 'setTrapVisibility',
+  TRAP_VISIBILITY_CHANGED: 'trapVisibilityChanged',
   ERROR: 'error',
   GAME_STATE: 'gameState'
 };

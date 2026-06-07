@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from './api.js';
 import { useGame } from './GameContext.jsx';
@@ -7,16 +7,7 @@ import { SOCKET_EVENTS, PLAYER_ROLES, BOARD_SIZE } from './constants.js';
 import Board from './Board.jsx';
 import Dice, { formatDiceResult } from './Dice.jsx';
 import QuestionModal from './QuestionModal.jsx';
-import easyQuestions from './data/easyQuestions.json';
-import mediumQuestions from './data/mediumQuestions.json';
-import hardQuestions from './data/hardQuestions.json';
 import './GameBoard.css';
-
-const QUESTIONS_BY_DIFFICULTY = {
-  easy: easyQuestions,
-  medium: mediumQuestions,
-  hard: hardQuestions
-};
 
 const EVENT_QUESTION_SEQUENCE = ['easy', 'medium', 'hard'];
 const REWARD_REVEAL_DURATION_MS = 2500;
@@ -29,16 +20,6 @@ const getQuestionKey = (question) => {
   const difficulty = getQuestionDifficulty(question);
   const id = question.id ?? question.question;
   return `${difficulty}:${id}`;
-};
-
-const pickUnusedQuestion = (difficulty, usedQuestionKeys) => {
-  const questionPool = QUESTIONS_BY_DIFFICULTY[difficulty] || [];
-  const unusedQuestions = questionPool.filter((question) => (
-    !usedQuestionKeys.has(getQuestionKey({ ...question, difficulty }))
-  ));
-
-  if (!unusedQuestions.length) return null;
-  return unusedQuestions[Math.floor(Math.random() * unusedQuestions.length)];
 };
 
 export default function GameBoard() {
@@ -116,37 +97,35 @@ export default function GameBoard() {
     }
   }, [gameState?.usedQuestionKeys, currentRoom?.usedQuestionKeys]);
 
-  const createEventQuestion = useCallback((difficulty, step) => {
-    const randomQuestion = pickUnusedQuestion(difficulty, usedQuestionKeysRef.current);
-    if (!randomQuestion) {
-      return null;
-    }
-
-    const question = {
-      ...randomQuestion,
-      difficulty,
-      isEventSequence: true,
-      eventStep: step,
-      eventTotal: EVENT_QUESTION_SEQUENCE.length
-    };
-    usedQuestionKeysRef.current.add(getQuestionKey(question));
-    return question;
-  }, []);
-
-  const showEventQuestion = useCallback((difficulty, step) => {
-    const question = createEventQuestion(difficulty, step);
-    if (!question) {
-      setError('Khong tim thay cau hoi event cho muc nay.');
-      return false;
-    }
-
+  const requestQuestion = useCallback((difficulty, meta = {}) => {
     setQuestionFeedback(null);
     setAnswerProcessing(false);
     answerLockedRef.current = false;
-    setShownQuestion(question);
-    socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question });
-    return true;
-  }, [createEventQuestion, roomId, socket, setShownQuestion]);
+
+    return new Promise((resolve) => {
+      socket.timeout(6000).emit(
+        SOCKET_EVENTS.REQUEST_QUESTION,
+        { roomId, difficulty, meta },
+        (ackError, response) => {
+          if (ackError || response?.ok === false) {
+            setError(response?.message || 'Khong nhan duoc cau hoi tu may chu.');
+            resolve(false);
+            return;
+          }
+
+          resolve(true);
+        }
+      );
+    });
+  }, [roomId, socket]);
+
+  const showEventQuestion = useCallback((difficulty, step) => (
+    requestQuestion(difficulty, {
+      isEventSequence: true,
+      eventStep: step,
+      eventTotal: EVENT_QUESTION_SEQUENCE.length
+    })
+  ), [requestQuestion]);
 
   const processEventCellLanded = useCallback((data) => {
     setError(null);
@@ -235,6 +214,16 @@ export default function GameBoard() {
       })
     });
   }, [currentRoom?.players, isHost, positionDrafts, positionSaving, roomId, socket]);
+
+  const handleToggleTrapVisibility = useCallback(() => {
+    if (!isHost) return;
+
+    const currentShowTraps = gameStateRef.current?.showTrapsOnMap ?? currentRoom?.showTrapsOnMap ?? true;
+    socket.emit(SOCKET_EVENTS.SET_TRAP_VISIBILITY, {
+      roomId,
+      showTrapsOnMap: !currentShowTraps
+    });
+  }, [currentRoom?.showTrapsOnMap, isHost, roomId, socket]);
 
   const handleBoardMovementStart = useCallback(() => {
     boardMovingRef.current = true;
@@ -525,7 +514,11 @@ export default function GameBoard() {
       }
 
       if (data?.message) {
-        if (isSpectator || data?.playerName === playerName) {
+        const shouldShowRewardNotice = data?.placedTrap
+          ? data?.playerName === playerName
+          : (isSpectator || data?.playerName === playerName);
+
+        if (shouldShowRewardNotice) {
           setRewardNotice({
             message: data.message,
             playerName: data?.playerName || ''
@@ -561,22 +554,20 @@ export default function GameBoard() {
     const handleEventActionPreview = (data) => {
       if (!isSpectator || !data?.reward) return;
 
+      if (data.actionType === 'trapPlacement') {
+        setPendingTargetReward(null);
+        setPendingTrapReward(null);
+        setPendingRewardChoices(null);
+        setRewardNotice(null);
+        return;
+      }
+
       setSelectedRewardChoice(data.reward);
 
       if (data.actionType === 'targetChoice') {
         setPendingTargetReward(data.reward);
         setPendingTrapReward(null);
         return;
-      }
-
-      if (data.actionType === 'trapPlacement') {
-        setPendingTargetReward(null);
-        setPendingTrapReward(data.reward);
-        setPendingRewardChoices(null);
-        setRewardNotice({
-          message: `${data.playerName || 'Nguoi choi'} dang chon o dat bay: ${data.reward.trapPenalty?.name || data.reward.name}`,
-          playerName: data.playerName || ''
-        });
       }
     };
 
@@ -685,6 +676,12 @@ export default function GameBoard() {
       setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
     };
 
+    const handleTrapVisibilityChanged = (data) => {
+      const showTrapsOnMap = data?.showTrapsOnMap !== false;
+      setCurrentRoom(prev => prev ? { ...prev, showTrapsOnMap } : null);
+      setGameState(prev => prev ? { ...prev, showTrapsOnMap } : null);
+    };
+
     socket.on(SOCKET_EVENTS.DICE_ROLLED, handleDiceRolled);
     socket.on(SOCKET_EVENTS.SHOW_QUESTION, handleQuestionShown);
     socket.on(SOCKET_EVENTS.PLAYER_MOVED, handlePlayerMoved);
@@ -695,6 +692,7 @@ export default function GameBoard() {
     socket.on(SOCKET_EVENTS.EVENT_REWARD_APPLIED, handleEventRewardApplied);
     socket.on(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, handleEventActionPreview);
     socket.on(SOCKET_EVENTS.PLAYER_POSITIONS_UPDATED, handlePlayerPositionsUpdated);
+    socket.on(SOCKET_EVENTS.TRAP_VISIBILITY_CHANGED, handleTrapVisibilityChanged);
     socket.on(SOCKET_EVENTS.TURN_ENDED, handleTurnEnded);
     socket.on(SOCKET_EVENTS.ERROR, handleSocketError);
 
@@ -709,6 +707,7 @@ export default function GameBoard() {
       socket.off(SOCKET_EVENTS.EVENT_REWARD_APPLIED, handleEventRewardApplied);
       socket.off(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, handleEventActionPreview);
       socket.off(SOCKET_EVENTS.PLAYER_POSITIONS_UPDATED, handlePlayerPositionsUpdated);
+      socket.off(SOCKET_EVENTS.TRAP_VISIBILITY_CHANGED, handleTrapVisibilityChanged);
       socket.off(SOCKET_EVENTS.TURN_ENDED, handleTurnEnded);
       socket.off(SOCKET_EVENTS.ERROR, handleSocketError);
     };
@@ -755,24 +754,12 @@ export default function GameBoard() {
   const handleRollDice = async () => {
     try {
       setError(null);
-      // Show a random (easy) question first — player must answer before roll
-      const q = pickUnusedQuestion('easy', usedQuestionKeysRef.current);
-      if (!q) {
-        // fallback to server roll if no questions
+      const gotQuestion = await requestQuestion('easy', { isPreRoll: true });
+      if (!gotQuestion) {
         socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId });
-        return;
       }
-
-      // Mark this question as a pre-roll question so it's handled differently
-      const preRollQuestion = { ...q, difficulty: 'easy', isPreRoll: true };
-      usedQuestionKeysRef.current.add(getQuestionKey(preRollQuestion));
-      setQuestionFeedback(null);
-      setAnswerProcessing(false);
-      answerLockedRef.current = false;
-      setShownQuestion(preRollQuestion);
-      socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question: preRollQuestion });
     } catch (err) {
-      setError('Lỗi khi chuẩn bị câu hỏi');
+      setError('Loi khi chuan bi cau hoi');
     }
   };
 
@@ -783,27 +770,10 @@ export default function GameBoard() {
     socket.emit(SOCKET_EVENTS.MOVE_PLAYER, { roomId, steps: diceTotal });
   };
 
-  const handleSelectDifficulty = (difficulty) => {
-    const randomQuestion = pickUnusedQuestion(difficulty, usedQuestionKeysRef.current);
-    if (!randomQuestion) {
-      setError('Không tìm thấy câu hỏi cho mức độ này');
-      return;
-    }
-
-    const questionWithDifficulty = {
-      ...randomQuestion,
-      difficulty
-    };
-    usedQuestionKeysRef.current.add(getQuestionKey(questionWithDifficulty));
-
+  const handleSelectDifficulty = async (difficulty) => {
     setEventQuestionDifficulty(difficulty);
     setEventDifficultyOpen(false);
-    setQuestionFeedback(null);
-    setAnswerProcessing(false);
-    answerLockedRef.current = false;
-    setShownQuestion(questionWithDifficulty);
-
-    socket.emit(SOCKET_EVENTS.SHOW_QUESTION, { roomId, question: questionWithDifficulty });
+    await requestQuestion(difficulty);
   };
 
   // Called when player selects an answer in the modal
@@ -813,17 +783,28 @@ export default function GameBoard() {
     setAnswerProcessing(true);
 
     try {
-      const correct = selectedIndex === shownQuestion.correctAnswer;
-      setQuestionFeedback({
-        selectedIndex,
-        correctIndex: shownQuestion.correctAnswer,
-        isCorrect: correct
+      const response = await new Promise((resolve, reject) => {
+        socket.timeout(6000).emit(
+          SOCKET_EVENTS.ANSWER_QUESTION,
+          { roomId, selectedIndex },
+          (ackError, ackResponse) => {
+            if (ackError) {
+              reject(ackError);
+              return;
+            }
+            resolve(ackResponse);
+          }
+        );
       });
 
-      socket.emit(SOCKET_EVENTS.QUESTION_ANSWER_REVEALED, {
-        roomId,
+      if (response?.ok === false) {
+        throw new Error(response.message || 'Khong cham duoc cau tra loi');
+      }
+
+      const correct = !!response?.isCorrect;
+      setQuestionFeedback({
         selectedIndex,
-        correctIndex: shownQuestion.correctAnswer,
+        correctIndex: response?.correctIndex ?? null,
         isCorrect: correct
       });
 
@@ -1042,6 +1023,7 @@ export default function GameBoard() {
 
   const players = gameState.players || [];
   const traps = gameState.traps || currentRoom.traps || [];
+  const showTrapsOnMap = gameState.showTrapsOnMap ?? currentRoom.showTrapsOnMap ?? true;
   const currentPlayerIndex = gameState.currentTurnIndex || 0;
   const currentPlayer = players[currentPlayerIndex];
   const isMyTurn = !isSpectator && currentPlayer && currentPlayer.name === playerName;
@@ -1071,6 +1053,16 @@ export default function GameBoard() {
               {isMyTurn ? '📍 Lượt của bạn' : `📍 Lượt của ${currentPlayer?.name || 'N/A'}`}
             </span>
             {isHost && (
+              <>
+              <button
+                className={`host-trap-visibility-btn ${showTrapsOnMap ? 'active' : ''}`}
+                type="button"
+                onClick={handleToggleTrapVisibility}
+                aria-label={showTrapsOnMap ? 'An bay tren map' : 'Hien bay tren map'}
+                title={showTrapsOnMap ? 'An bay tren map cho tat ca nguoi choi' : 'Hien bay tren map cho tat ca nguoi choi'}
+              >
+                !
+              </button>
               <button
                 className="host-settings-btn"
                 type="button"
@@ -1080,6 +1072,7 @@ export default function GameBoard() {
               >
                 ⚙
               </button>
+              </>
             )}
           </div>
         </div>
@@ -1299,6 +1292,7 @@ export default function GameBoard() {
                 currentPlayerIndex={currentPlayerIndex}
                 boardSize={boardSize}
                 traps={traps}
+                showTraps={showTrapsOnMap}
                 trapPlacement={{ active: trapPlacementActive }}
                 onSelectTrapCell={handleSelectTrapCell}
                 onMovementStart={handleBoardMovementStart}
@@ -1367,3 +1361,5 @@ export default function GameBoard() {
     </div>
   );
 }
+
+

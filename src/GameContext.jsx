@@ -28,7 +28,7 @@ export const GameProvider = ({ children, socket }) => {
       },
       [SOCKET_EVENTS.GAME_STARTED]: (data) => {
         setGameState(data);
-        setCurrentRoom(prev => prev ? { ...prev, status: 'playing', players: data.players, traps: data.traps || [] } : null);
+        setCurrentRoom(prev => prev ? { ...prev, status: 'playing', players: data.players, traps: data.traps || [], showTrapsOnMap: data.showTrapsOnMap !== false } : null);
       },
       [SOCKET_EVENTS.SHOW_QUESTION]: (data) => {
         setShownQuestion(data.question);
@@ -100,6 +100,10 @@ export const GameProvider = ({ children, socket }) => {
       },
       [SOCKET_EVENTS.GAME_STATE]: (data) => {
         setGameState(data);
+      },
+      [SOCKET_EVENTS.TRAP_VISIBILITY_CHANGED]: (data) => {
+        setCurrentRoom(prev => prev ? { ...prev, showTrapsOnMap: data.showTrapsOnMap !== false } : null);
+        setGameState(prev => prev ? { ...prev, showTrapsOnMap: data.showTrapsOnMap !== false } : null);
       },
       [SOCKET_EVENTS.ERROR]: (data) => {
         setError(data.message);

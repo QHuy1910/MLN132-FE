@@ -33,6 +33,7 @@ export default function Board({
   currentPlayerIndex,
   boardSize = BOARD_SIZE,
   traps = [],
+  showTraps = true,
   trapPlacement = null,
   onSelectTrapCell,
   onMovementStart,
@@ -184,7 +185,7 @@ export default function Board({
           </g>
         );
       })}
-      {[...trapCountsByCell.entries()].map(([cellIndex, trapCount]) => {
+      {showTraps && [...trapCountsByCell.entries()].map(([cellIndex, trapCount]) => {
         const spacePos = spaces[cellIndex];
         if (!spacePos) return null;
 
