@@ -1,0 +1,206 @@
+[
+  {
+    "id": 1,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tú, bạn đã nhắc đến Phó Giáo Sư nào?",
+    "answers": [
+      "PGS. Đặng Thị Hoa",
+      "PGS. Nguyễn Thị Bảo Anh",
+      "PGS. Vũ Văn Đông",
+      "PGS. Đoàn Thanh Nghị"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "id": 2,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tú, bạn đã nhắc đến Bác sĩ nào?",
+    "answers": [
+      "BS. Thạch",
+      "BS. Khang",
+      "BS. Tuấn",
+      "BS. Duy"
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "id": 3,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tú, bạn đã đưa ra bao nhiêu nguồn trích dẫn?",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 4,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tú, câu nói \"Nam giới có thể bị quấy rối tình dục, kiểm soát, bạo lực bằng lời nói - nhưng ít được ghi nhận.\" được trích từ nguồn nào?",
+    "answers": [
+      "Nguồn: Báo Pháp Luật",
+      "Nguồn: Người Lao Động",
+      "Nguồn: Tuổi trẻ",
+      "Nguồn: Thanh niên"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "id": 5,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của nhóm, có tổng bao nhiêu chương?",
+    "answers": [
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 6,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tú, bạn đã sử dụng câu nói dân gian nào?",
+    "answers": [
+      "Có tiền là có quyền",
+      "Thuận vợ thuận chồng, tát biển Đông cũng cạn.",
+      "Chồng cày, vợ cấy, con trâu đi bừa.",
+      "Bà phải có ông, chồng phải có vợ."
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "id": 7,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tòng, Ngoài bạo lực thể chất, nam giới còn có thể phải chịu bao nhiêu loại bạo lực mà bạn đã liệt kê?",
+    "answers": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 8,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Tòng, ở phần 1.1 các số liệu được nghiên cứu tại các quốc gia nào?",
+    "answers": [
+      "Việt Nam, Lào, Campuchia và Singapore",
+      "Mỹ, Canada, Úc và Vương quốc Anh",
+      "Mỹ, Trung Quốc, Ấn Độ và Mexico",
+      "Tây Ban Nha, Bồ Đồ Nha, Brazil và Đức"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 9,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục đầu tiên là?",
+    "answers": [
+      "Ứng dụng công nghệ",
+      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
+      "Lan tỏa nhận thức",
+      "Tôn trọng lẫn nhau"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 10,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Khôi, bạn có nhắc đến Luật Bình đẳng giới năm 2006 thì bạn đã nhắc đến điều số mấy?",
+    "answers": [
+      "Điều 3",
+      "Điều 6",
+      "Điều 9",
+      "Điều 12"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 11,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục thứ hai là?",
+    "answers": [
+      "Kêu gọi hành động",
+      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
+      "Lan tỏa nhận thức",
+      "Xây dựng gia đình trong tương lai - Từ bài học thực tiễn"
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "id": 12,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Khôi, nội dung bạn thuyết trình giúp xóa bỏ định kiến nào?",
+    "answers": [
+      "Đàn ông phải mạnh mẽ và không được khóc",
+      "Đàn ông luôn là người gây ra bạo lực gia đình",
+      "Đàn ông thì không thể là nạn nhân",
+      "Đàn ông có khả năng tự giải quyết mọi vấn đề"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "id": 13,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Khanh, bạn đã nhắc đến 3 Điều của Hiến Pháp 2013 đó là các Điều nào?",
+    "answers": [
+      "Điều 10, Điều 20, Điều 30",
+      "Điều 13, Điều 23, Điều 33",
+      "Điều 16, Điều 26, Điều 36",
+      "Điều 19, Điều 29, Điều 39"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "id": 14,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Khanh, đã nhắc đến Điều mấy của Luật Phòng, chống bạo lực gia đình năm 2022 (Luật số 13/2022/QH15)?",
+    "answers": [
+      "Điều 3",
+      "Điều 6",
+      "Điều 9",
+      "Điều 12"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "id": 15,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục thứ ba là?",
+    "answers": [
+      "Kêu gọi hành động",
+      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
+      "Lan tỏa nhận thức",
+      "Tôn trọng lẫn nhau"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "id": 16,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Huy, trong phần 5.3 có nhắc tới nghị định nào?",
+    "answers": [
+      "Nghị định 232/2025/NĐ-CP",
+      "Nghị định 82/2025/NĐ-CP",
+      "Nghị định 282/2025/NĐ-CP",
+      "Nghị định 168/2024/NĐ-CP"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "id": 17,
+    "difficulty": "hard",
+    "question": "Trong phần thuyết trình của bạn Huy, trong phần 5.1 cần phá bỏ định kiến nào?",
+    "answers": [
+      "Đàn ông phải tự tin và không được yếu đuối.",
+      "Đàn ông phải mạnh mẽ và không thể là nạn nhân.",
+      "Đàn ông phải là trụ cột của gia đình.",
+      "Đàn ông phải có chí tiến thủ không chùn bước."
+    ],
+    "correctAnswer": 1
+  }
+]

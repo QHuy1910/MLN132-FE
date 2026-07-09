@@ -1,45 +1,25 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { api } from './api.js';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from './GameContext.jsx';
-import { getSocket } from './socket.js';
-import { SOCKET_EVENTS, PLAYER_ROLES, BOARD_SIZE } from './constants.js';
+import {
+  rollDice, movePlayer, nextTurn, prepareQuestion, answerQuestion,
+  resolveEventQuestion, applyEventChoice, setTrapVisibility,
+  updatePlayerPositions, computeRanking, EVENT_CELL_INDEXES,
+  EVENT_QUESTION_SEQUENCE_LIST
+} from './gameEngine.js';
+import { BOARD_SIZE } from './constants.js';
 import Board from './Board.jsx';
 import Dice, { formatDiceResult } from './Dice.jsx';
 import QuestionModal from './QuestionModal.jsx';
 import './GameBoard.css';
 
-const EVENT_QUESTION_SEQUENCE = ['easy', 'medium', 'hard'];
+const EVENT_QUESTION_SEQUENCE = EVENT_QUESTION_SEQUENCE_LIST;
 const REWARD_REVEAL_DURATION_MS = 2500;
-
-const getQuestionDifficulty = (question) => question?.difficulty || 'easy';
-
-const getQuestionKey = (question) => {
-  if (!question) return '';
-
-  const difficulty = getQuestionDifficulty(question);
-  const id = question.id ?? question.question;
-  return `${difficulty}:${id}`;
-};
 
 export default function GameBoard() {
   const navigate = useNavigate();
-  const { roomId } = useParams();
-  const {
-    currentRoom,
-    setCurrentRoom,
-    gameState,
-    setGameState,
-    playerName,
-    playerRole,
-    playerCharacter,
-    isSpectator,
-    isHost,
-    shownQuestion,
-    setShownQuestion
-  } = useGame();
+  const { gameState, setGameState, shownQuestion, setShownQuestion, roomName, resetGame } = useGame();
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rewardNotice, setRewardNotice] = useState(null);
   const [diceValues, setDiceValues] = useState(null);
@@ -59,77 +39,64 @@ export default function GameBoard() {
   const [selectedRewardChoice, setSelectedRewardChoice] = useState(null);
   const [pendingTargetReward, setPendingTargetReward] = useState(null);
   const [pendingTrapReward, setPendingTrapReward] = useState(null);
-  const [eventDifficultyOpen, setEventDifficultyOpen] = useState(false);
-  const [eventCellIndex, setEventCellIndex] = useState(null);
   const [boardNotice, setBoardNotice] = useState(null);
   const [positionEditorOpen, setPositionEditorOpen] = useState(false);
   const [positionDrafts, setPositionDrafts] = useState({});
   const [positionSaving, setPositionSaving] = useState(false);
-  const [eventQuestionDifficulty, setEventQuestionDifficulty] = useState(null);
-  const [eventProgress, setEventProgress] = useState({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
+  const [eventProgress, setEventProgress] = useState({ active: false, step: 0, correctCount: 0, total: 3 });
+
   const answerRevealTimerRef = useRef(null);
   const autoMoveTimerRef = useRef(null);
   const rewardRevealTimerRef = useRef(null);
-  const eventResolvePendingRef = useRef(false);
   const eventSequenceRef = useRef({ active: false, step: 0, correctCount: 0 });
   const answerLockedRef = useRef(false);
-  const gameSocketJoinKeyRef = useRef(null);
   const completionStartedRef = useRef(false);
   const navigationTimerRef = useRef(null);
-  const gameStateRef = useRef(gameState);
   const boardMovingRef = useRef(false);
   const pendingEventCellRef = useRef(null);
-  const usedQuestionKeysRef = useRef(new Set());
-  const socket = getSocket();
+  const gameStateRef = useRef(gameState);
 
-  useEffect(() => {
-    gameStateRef.current = gameState;
-  }, [gameState]);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
 
+  // Redirect to setup if no game
   useEffect(() => {
-    usedQuestionKeysRef.current = new Set();
-  }, [roomId]);
-
-  useEffect(() => {
-    const usedQuestionKeys = gameState?.usedQuestionKeys || currentRoom?.usedQuestionKeys || [];
-    if (usedQuestionKeys.length) {
-      usedQuestionKeysRef.current = new Set(usedQuestionKeys);
+    if (!gameState) {
+      navigate('/');
     }
-  }, [gameState?.usedQuestionKeys, currentRoom?.usedQuestionKeys]);
+  }, [gameState, navigate]);
 
-  const requestQuestion = useCallback((difficulty, meta = {}) => {
-    setQuestionFeedback(null);
-    setAnswerProcessing(false);
-    answerLockedRef.current = false;
+  // Cleanup timers
+  useEffect(() => () => {
+    [navigationTimerRef, answerRevealTimerRef, autoMoveTimerRef, rewardRevealTimerRef]
+      .forEach(ref => { if (ref.current) window.clearTimeout(ref.current); });
+  }, []);
 
-    return new Promise((resolve) => {
-      socket.timeout(6000).emit(
-        SOCKET_EVENTS.REQUEST_QUESTION,
-        { roomId, difficulty, meta },
-        (ackError, response) => {
-          if (ackError || response?.ok === false) {
-            setError(response?.message || 'Khong nhan duoc cau hoi tu may chu.');
-            resolve(false);
-            return;
-          }
+  // ── Game Completion ─────────────────────────────────────────
+  const finalizeGame = useCallback(() => {
+    if (completionStartedRef.current) return;
+    completionStartedRef.current = true;
+    setGameCompleted(true);
 
-          resolve(true);
-        }
-      );
+    setGameState(prev => {
+      if (!prev) return prev;
+      const ranking = computeRanking(prev);
+      return { ...prev, status: 'finished', ranking };
     });
-  }, [roomId, socket]);
 
-  const showEventQuestion = useCallback((difficulty, step) => (
-    requestQuestion(difficulty, {
-      isEventSequence: true,
-      eventStep: step,
-      eventTotal: EVENT_QUESTION_SEQUENCE.length
-    })
-  ), [requestQuestion]);
+    navigationTimerRef.current = window.setTimeout(() => {
+      navigate('/ranking');
+    }, 1200);
+  }, [navigate, setGameState]);
 
-  const processEventCellLanded = useCallback((data) => {
+  useEffect(() => {
+    if (gameState?.status === 'finished' && !gameCompleted) {
+      finalizeGame();
+    }
+  }, [gameState?.status, gameCompleted, finalizeGame]);
+
+  // ── Event Cell Landing ──────────────────────────────────────
+  const processEventCellLanded = useCallback((cellIndex, playerName) => {
     setError(null);
-    setEventCellIndex(data?.cellIndex ?? null);
     setShownQuestion(null);
     setPendingRewardChoices(null);
     setSelectedRewardChoice(null);
@@ -139,407 +106,367 @@ export default function GameBoard() {
     eventSequenceRef.current = { active: true, step: 0, correctCount: 0 };
     setEventProgress({ active: true, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
 
-    const isLandingPlayer = !isSpectator && data?.playerName === playerName;
-    const landingPlayerName = data?.playerName || 'Nguoi choi';
+    setBoardNotice({
+      type: 'event',
+      title: `${playerName} đã vào ô event!`,
+      message: 'Bắt đầu chuỗi 3 câu hỏi event.',
+      playerName,
+      canStartQuestion: true,
+    });
+  }, [setShownQuestion]);
 
-    if (!isLandingPlayer && !isSpectator) {
-      setBoardNotice(null);
+  const handleBoardMovementStart = useCallback(() => { boardMovingRef.current = true; }, []);
+  const handleBoardMovementComplete = useCallback(() => {
+    boardMovingRef.current = false;
+    const pending = pendingEventCellRef.current;
+    pendingEventCellRef.current = null;
+    if (pending) processEventCellLanded(pending.cellIndex, pending.playerName);
+  }, [processEventCellLanded]);
+
+  // ── Show event question step ────────────────────────────────
+  const showEventQuestion = useCallback((difficulty, step) => {
+    const currentGs = gameStateRef.current;
+    if (!currentGs) return;
+
+    const { state: newState, question } = prepareQuestion(currentGs, difficulty, {
+      isEventSequence: true,
+      eventStep: step,
+      eventTotal: EVENT_QUESTION_SEQUENCE.length,
+    });
+
+    if (!question) {
+      setError('Không còn câu hỏi nào.');
       return;
     }
 
-    setBoardNotice({
-      type: 'event',
-      title: isLandingPlayer ? 'Ban da vao o event' : `${landingPlayerName} da vao o event`,
-      message: isLandingPlayer
-        ? 'Bam xac nhan de bat dau chuoi cau hoi event.'
-        : `${landingPlayerName} dang chuan bi bat dau chuoi cau hoi event.`,
-      playerName: landingPlayerName,
-      canStartQuestion: isLandingPlayer
-    });
-  }, [isSpectator, playerName, setShownQuestion]);
+    setGameState(newState);
+    setShownQuestion(question);
+    setQuestionFeedback(null);
+    setAnswerProcessing(false);
+    answerLockedRef.current = false;
+    setBoardNotice(null);
+  }, [setGameState, setShownQuestion]);
 
   const handleConfirmBoardNotice = useCallback(() => {
-    const currentNotice = boardNotice;
+    const notice = boardNotice;
     setBoardNotice(null);
-
-    if (currentNotice?.type === 'event' && currentNotice.canStartQuestion) {
+    if (notice?.type === 'event' && notice.canStartQuestion) {
       showEventQuestion(EVENT_QUESTION_SEQUENCE[0], 0);
     }
   }, [boardNotice, showEventQuestion]);
 
+  // ── Position Editor ─────────────────────────────────────────
   const openPositionEditor = useCallback(() => {
-    const currentPlayers = gameStateRef.current?.players || currentRoom?.players || [];
-    const nextDrafts = {};
-    currentPlayers.forEach((player, index) => {
-      const key = player.playerId || player.name || String(index);
-      nextDrafts[key] = Number(player.position || 0);
+    const players = gameStateRef.current?.players || [];
+    const drafts = {};
+    players.forEach((p, i) => {
+      const key = p.playerId || p.name || String(i);
+      drafts[key] = Number(p.position || 0);
     });
-    setPositionDrafts(nextDrafts);
+    setPositionDrafts(drafts);
     setPositionEditorOpen(true);
     setPositionSaving(false);
-  }, [currentRoom?.players]);
+  }, []);
 
   const closePositionEditor = useCallback(() => {
     if (positionSaving) return;
     setPositionEditorOpen(false);
   }, [positionSaving]);
 
-  const handlePositionDraftChange = useCallback((playerKey, value) => {
-    const maxPosition = Math.max(0, Number(gameStateRef.current?.boardSize || currentRoom?.boardSize || BOARD_SIZE) - 1);
-    const numericValue = Number(value);
-    const nextPosition = Number.isFinite(numericValue)
-      ? Math.min(Math.max(0, numericValue), maxPosition)
-      : 0;
-
-    setPositionDrafts((prev) => ({
-      ...prev,
-      [playerKey]: nextPosition
-    }));
-  }, [currentRoom?.boardSize]);
+  const handlePositionDraftChange = useCallback((key, value) => {
+    const boardSz = gameStateRef.current?.boardSize || BOARD_SIZE;
+    const max = Math.max(0, boardSz - 1);
+    const next = Math.min(Math.max(0, Number(value) || 0), max);
+    setPositionDrafts(prev => ({ ...prev, [key]: next }));
+  }, []);
 
   const handleSavePlayerPositions = useCallback(() => {
-    const currentPlayers = gameStateRef.current?.players || currentRoom?.players || [];
-    if (!isHost || positionSaving || !currentPlayers.length) return;
-
+    const current = gameStateRef.current;
+    if (!current) return;
     setPositionSaving(true);
-    socket.emit(SOCKET_EVENTS.UPDATE_PLAYER_POSITIONS, {
-      roomId,
-      positions: currentPlayers.map((player, index) => {
-        const key = player.playerId || player.name || String(index);
-        return {
-          playerId: player.playerId,
-          name: player.name,
-          position: positionDrafts[key] ?? player.position ?? 0
-        };
-      })
-    });
-  }, [currentRoom?.players, isHost, positionDrafts, positionSaving, roomId, socket]);
+
+    const positions = current.players.map((p, i) => ({
+      playerId: p.playerId,
+      name: p.name,
+      position: positionDrafts[p.playerId || p.name || String(i)] ?? p.position ?? 0,
+    }));
+
+    const newState = updatePlayerPositions(current, positions);
+    setGameState(newState);
+    setPositionSaving(false);
+    setPositionEditorOpen(false);
+    setRewardNotice({ message: 'Đã cập nhật vị trí người chơi', playerName: '' });
+  }, [positionDrafts, setGameState]);
 
   const handleToggleTrapVisibility = useCallback(() => {
-    if (!isHost) return;
+    const current = gameStateRef.current;
+    if (!current) return;
+    const newState = setTrapVisibility(current, !current.showTrapsOnMap);
+    setGameState(newState);
+  }, [setGameState]);
 
-    const currentShowTraps = gameStateRef.current?.showTrapsOnMap ?? currentRoom?.showTrapsOnMap ?? true;
-    socket.emit(SOCKET_EVENTS.SET_TRAP_VISIBILITY, {
-      roomId,
-      showTrapsOnMap: !currentShowTraps
-    });
-  }, [currentRoom?.showTrapsOnMap, isHost, roomId, socket]);
-
-  const handleBoardMovementStart = useCallback(() => {
-    boardMovingRef.current = true;
-  }, []);
-
-  const handleBoardMovementComplete = useCallback(() => {
-    boardMovingRef.current = false;
-    const pendingEventCell = pendingEventCellRef.current;
-    pendingEventCellRef.current = null;
-
-    if (pendingEventCell) {
-      processEventCellLanded(pendingEventCell);
-    }
-  }, [processEventCellLanded]);
-
-  const finalizeGameAndNavigate = useCallback(async () => {
-    if (completionStartedRef.current) return;
-
-    completionStartedRef.current = true;
-    setGameCompleted(true);
+  // ── Roll Dice ───────────────────────────────────────────────
+  const handleRollDice = useCallback(() => {
+    const current = gameStateRef.current;
+    if (!current || current.status !== 'playing') return;
 
     try {
-      const completedRoom = await api.completeRoom(roomId);
-      setCurrentRoom(completedRoom);
+      setError(null);
+      // Pre-roll question first
+      const { state: questionState, question } = prepareQuestion(current, 'easy', { isPreRoll: true });
+
+      if (question) {
+        setGameState(questionState);
+        setShownQuestion(question);
+        setQuestionFeedback(null);
+        setAnswerProcessing(false);
+        answerLockedRef.current = false;
+      } else {
+        // No questions left, roll directly
+        const { state: rolledState, diceValues: dv, total, modifier } = rollDice(current);
+        setGameState(rolledState);
+        setIsRolling(true);
+        window.setTimeout(() => {
+          setDiceValues(dv);
+          setDiceTotal(total);
+          setLastRollInfo({ playerName: rolledState.players[rolledState.currentTurnIndex]?.name || '', diceValues: dv, total, modifier });
+          setIsRolling(false);
+          if (total <= 0) {
+            endTurnLocal(rolledState);
+          }
+        }, 1250);
+        setHasRolledThisTurn(true);
+        setCanMoveAfterRoll(total > 0);
+      }
     } catch (err) {
-      console.error('Error completing game:', err);
-    } finally {
-      navigationTimerRef.current = window.setTimeout(() => {
-        navigate(`/ranking/${roomId}`);
-      }, 800);
+      setError(err.message || 'Lỗi khi lắc xúc xắc');
     }
-  }, [roomId, navigate, setCurrentRoom]);
+  }, [setGameState, setShownQuestion]);
 
-  useEffect(() => {
-    if (gameState?.status === 'finished' && !gameCompleted) {
-      finalizeGameAndNavigate();
-    }
-  }, [gameState?.status, gameCompleted, finalizeGameAndNavigate]);
-
-  useEffect(() => () => {
-    if (navigationTimerRef.current) {
-      window.clearTimeout(navigationTimerRef.current);
-    }
-    if (answerRevealTimerRef.current) {
-      window.clearTimeout(answerRevealTimerRef.current);
-    }
-    if (autoMoveTimerRef.current) {
-      window.clearTimeout(autoMoveTimerRef.current);
-    }
-    if (rewardRevealTimerRef.current) {
-      window.clearTimeout(rewardRevealTimerRef.current);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!roomId) {
-      navigate('/');
-      return;
-    }
-
-    socket.emit(SOCKET_EVENTS.GET_GAME_STATE, { roomId });
-
-    const handleDiceRolled = (data) => {
-      const totalSteps = data.total ?? data.diceValue ?? null;
-      const rolledValues = data.diceValues || null;
-      const rollModifier = Number(data.modifier || 0);
-      const canMoveWithRoll = Number(totalSteps || 0) > 0;
-
-      setShownQuestion(null);
-      setQuestionFeedback(null);
-      setAnswerProcessing(false);
+  // After pre-roll question answered → actually roll
+  const doActualRoll = useCallback((currentGS) => {
+    try {
+      const { state: rolledState, diceValues: dv, total, modifier } = rollDice(currentGS);
+      setGameState(rolledState);
       setIsRolling(true);
       window.setTimeout(() => {
-        setDiceValues(rolledValues);
-        setDiceTotal(totalSteps);
-        setLastRollInfo({
-          playerName: data.playerName || 'Người chơi',
-          diceValues: rolledValues,
-          total: totalSteps,
-          modifier: rollModifier
-        });
+        setDiceValues(dv);
+        setDiceTotal(total);
+        setLastRollInfo({ playerName: rolledState.players[rolledState.currentTurnIndex]?.name || '', diceValues: dv, total, modifier });
         setIsRolling(false);
-        if (!canMoveWithRoll && !isSpectator && data?.playerName === playerName) {
-          setRewardNotice({
-            message: 'Bi tru het so buoc, ban khong duoc di chuyen.',
-            playerName
-          });
-          socket.emit(SOCKET_EVENTS.END_TURN, { roomId });
+        if (total <= 0) {
+          endTurnLocal(rolledState);
         }
       }, 1250);
       setHasRolledThisTurn(true);
-      setCanMoveAfterRoll(canMoveWithRoll);
-    };
+      setCanMoveAfterRoll(total > 0);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi lắc xúc xắc');
+    }
+  }, [setGameState]);
 
-    const handlePlayerMoved = (data) => {
-      if (autoMoveTimerRef.current) {
-        window.clearTimeout(autoMoveTimerRef.current);
-      }
+  // ── End Turn ────────────────────────────────────────────────
+  const endTurnLocal = useCallback((currentGS) => {
+    const gs = currentGS || gameStateRef.current;
+    if (!gs) return;
 
-      const previousPlayers = gameStateRef.current?.players || [];
-      const nextPlayers = data.players || [];
-      const hasPositionChange = nextPlayers.some((player, index) => (
-        Number(previousPlayers[index]?.position || 0) !== Number(player.position || 0)
-      ));
+    const newState = nextTurn(gs);
+    setGameState(newState);
+    setDiceValues(null);
+    setDiceTotal(null);
+    setIsRolling(false);
+    setHasRolledThisTurn(false);
+    setCanMoveAfterRoll(false);
+    setShownQuestion(null);
+    setQuestionFeedback(null);
+    setAnswerProcessing(false);
+    setRewardChoiceLoading(false);
+    setPendingRewardChoices(null);
+    setRewardChoicePhase('select');
+    setSelectedRewardChoice(null);
+    setPendingTargetReward(null);
+    setPendingTrapReward(null);
+    setRewardNotice(null);
+    setBoardNotice(null);
+    eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
+    setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
+    boardMovingRef.current = false;
+    pendingEventCellRef.current = null;
+    answerLockedRef.current = false;
 
-      if (hasPositionChange) {
-        boardMovingRef.current = true;
-      }
+    if (newState.status === 'finished') {
+      finalizeGame();
+    }
+  }, [setGameState, setShownQuestion, finalizeGame]);
 
-      setCurrentRoom(prev => prev ? {
-        ...prev,
-        players: data.players,
-        traps: data.traps || prev.traps || [],
-        status: data.status || prev.status
-      } : null);
+  // ── Move Player ─────────────────────────────────────────────
+  const handleMoveAfterRoll = useCallback(() => {
+    if (!canMoveAfterRoll || diceTotal == null || diceTotal <= 0) return;
+    const current = gameStateRef.current;
+    if (!current) return;
 
-      setGameState(prev => ({
-        ...(prev || {}),
-        players: data.players,
-        traps: data.traps || prev?.traps || [],
-        status: data.status || prev?.status || 'playing',
-        winner: data.winner || prev?.winner || null,
-        boardSize: data.boardSize || prev?.boardSize || BOARD_SIZE
-      }));
+    try {
+      setCanMoveAfterRoll(false);
+      const { state: movedState, triggeredTrap, landedOnEvent } = movePlayer(current, diceTotal);
+      setGameState(movedState);
 
-      if (data?.trapTriggered) {
-        const isTrapPlayer = !isSpectator && data?.playerName === playerName;
-        if (isTrapPlayer || isSpectator) {
+      const movedPlayerIndex = current.currentTurnIndex;
+      const movedPlayer = movedState.players[movedPlayerIndex];
+
+      if (triggeredTrap) {
+        const isTrapPlayer = true; // In local mode, host controls everyone
+        if (isTrapPlayer) {
           setBoardNotice({
             type: 'trap',
-            title: isTrapPlayer ? 'Ban da vao o bay' : `${data?.playerName || 'Nguoi choi'} da vao o bay`,
-            message: data.message || `${data?.playerName || 'Nguoi choi'} da kich hoat bay.`,
-            playerName: data?.playerName || ''
+            title: `${movedPlayer?.name || 'Người chơi'} đã vào ô bẫy!`,
+            message: triggeredTrap.traps?.map(t => t.penalty?.name || 'Hình phạt').join(', ') || 'Bị dính bẫy!',
+            playerName: movedPlayer?.name || '',
           });
-        } else {
-          setBoardNotice(null);
         }
-      } else if (data?.message) {
-        setRewardNotice({
-          message: data.message,
-          playerName: data?.playerName || ''
-        });
-      }
-
-      // Close question modal when player moved
-      setShownQuestion(null);
-      setCanMoveAfterRoll(false);
-
-      if (data.status === 'finished') {
-        finalizeGameAndNavigate();
-      }
-    };
-
-    const handleEventCellLanded = (data) => {
-      if (boardMovingRef.current) {
-        pendingEventCellRef.current = data;
+        if (movedState.status === 'finished') {
+          finalizeGame();
+          return;
+        }
+        // End turn after trap
+        window.setTimeout(() => endTurnLocal(movedState), 2000);
         return;
       }
 
-      processEventCellLanded(data);
-    };
-
-    const handleQuestionShown = (data) => {
-      answerLockedRef.current = false;
-      setBoardNotice((prev) => (prev?.type === 'event' ? null : prev));
-      const question = data?.question;
-      if (question) {
-        usedQuestionKeysRef.current.add(getQuestionKey(question));
-      }
-      if (question?.isEventSequence) {
-        const step = Number(question.eventStep || 0);
-        eventSequenceRef.current = {
-          active: true,
-          step,
-          correctCount: eventSequenceRef.current.correctCount || 0
-        };
-        setEventProgress((prev) => ({
-          active: true,
-          step,
-          correctCount: prev.correctCount || 0,
-          total: question.eventTotal || EVENT_QUESTION_SEQUENCE.length
-        }));
-      }
-      setQuestionFeedback(null);
-      setAnswerProcessing(false);
-    };
-
-    const handleQuestionAnswerRevealed = (data) => {
-      setQuestionFeedback({
-        selectedIndex: data?.selectedIndex ?? null,
-        correctIndex: data?.correctIndex ?? null,
-        isCorrect: !!data?.isCorrect
-      });
-      setAnswerProcessing(false);
-    };
-
-    const handleEventRewardShuffled = (data) => {
-      if (!data?.choices?.length) return;
-
-      if (rewardRevealTimerRef.current) {
-        window.clearTimeout(rewardRevealTimerRef.current);
-      }
-
-      setPendingRewardChoices((prev) => prev ? { ...prev, choices: data.choices } : prev);
-      setSelectedRewardChoice(null);
-      setRewardChoicePhase('select');
-      setRewardChoiceLoading(false);
-    };
-
-    const handleEventRewardChoices = (data) => {
-      eventResolvePendingRef.current = false;
-      if (rewardRevealTimerRef.current) {
-        window.clearTimeout(rewardRevealTimerRef.current);
-      }
-
-      if (data?.players) {
-        setCurrentRoom(prev => prev ? {
-          ...prev,
-          players: data.players,
-          traps: data.traps || prev.traps || [],
-          status: data.status || prev.status
-        } : null);
-
-        setGameState(prev => ({
-          ...(prev || {}),
-          players: data.players,
-          traps: data.traps || prev?.traps || [],
-          status: data.status || prev?.status || 'playing',
-          winner: data.winner || prev?.winner || null
-        }));
-      }
-
-      if (data?.message) {
-        setError(data.message);
-      }
-
-      if (data?.noReward || !data?.choices?.length) {
-        setPendingRewardChoices(null);
-        setRewardChoicePhase('select');
-        setSelectedRewardChoice(null);
-        setPendingTargetReward(null);
-        setPendingTrapReward(null);
-        setRewardNotice(null);
-        setShownQuestion(null);
-        setAnswerProcessing(false);
-        setQuestionFeedback(null);
-        eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
-        setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
+      if (movedState.status === 'finished') {
+        finalizeGame();
         return;
       }
 
-      setPendingRewardChoices({
-        choices: data?.choices || [],
-        difficulty: data?.rewardDifficulty || data?.difficulty,
-        correctCount: data?.correctCount || 0,
-        isCorrect: true,
-        message: data?.message || ''
-      });
-      setRewardChoicePhase('select');
-      setSelectedRewardChoice(null);
-      setPendingTargetReward(null);
-      setPendingTrapReward(null);
-      setRewardNotice(null);
-
-      setShownQuestion(null);
-      setAnswerProcessing(false);
-      setQuestionFeedback(null);
-      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
-      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
-    };
-
-    const handleEventRewardApplied = (data) => {
-      if (data?.players) {
-        setCurrentRoom(prev => prev ? {
-          ...prev,
-          players: data.players,
-          traps: data.traps || prev.traps || [],
-          status: data.status || prev.status
-        } : null);
-
-        setGameState(prev => ({
-          ...(prev || {}),
-          players: data.players,
-          traps: data.traps || prev?.traps || [],
-          status: data.status || prev?.status || 'playing',
-          winner: data.winner || prev?.winner || null
-        }));
-      }
-
-      if (data?.message) {
-        const shouldShowRewardNotice = data?.placedTrap
-          ? data?.playerName === playerName
-          : (isSpectator || data?.playerName === playerName);
-
-        if (shouldShowRewardNotice) {
-          setRewardNotice({
-            message: data.message,
-            playerName: data?.playerName || ''
-          });
+      if (landedOnEvent) {
+        const playerName = movedPlayer?.name || 'Người chơi';
+        if (boardMovingRef.current) {
+          pendingEventCellRef.current = { cellIndex: movedPlayer.position, playerName };
         } else {
-          setRewardNotice(null);
+          processEventCellLanded(movedPlayer.position, playerName);
         }
+        return;
       }
+
+      // Normal cell - end turn
+      window.setTimeout(() => endTurnLocal(movedState), 500);
+    } catch (err) {
+      setError(err.message || 'Lỗi di chuyển');
+    }
+  }, [canMoveAfterRoll, diceTotal, setGameState, finalizeGame, endTurnLocal, processEventCellLanded]);
+
+  // ── Answer Question ─────────────────────────────────────────
+  const handleAnswerSelection = useCallback(async (selectedIndex) => {
+    if (!shownQuestion || answerProcessing || answerLockedRef.current) return;
+    answerLockedRef.current = true;
+    setAnswerProcessing(true);
+
+    const current = gameStateRef.current;
+    if (!current) return;
+
+    try {
+      const { state: answeredState, isCorrect, correctIndex } = answerQuestion(current, selectedIndex);
+      setGameState(answeredState);
+
+      setQuestionFeedback({ selectedIndex: Number(selectedIndex), correctIndex, isCorrect });
+      setAnswerProcessing(false);
+
+      if (answerRevealTimerRef.current) window.clearTimeout(answerRevealTimerRef.current);
+
+      // Pre-roll question
+      if (shownQuestion?.isPreRoll) {
+        answerRevealTimerRef.current = window.setTimeout(() => {
+          setShownQuestion(null);
+          setQuestionFeedback(null);
+          if (isCorrect) {
+            doActualRoll(answeredState);
+          } else {
+            setError('Trả lời sai, mất lượt!');
+            endTurnLocal(answeredState);
+          }
+        }, 1200);
+        return;
+      }
+
+      // Event sequence
+      if (shownQuestion?.isEventSequence) {
+        answerRevealTimerRef.current = window.setTimeout(() => {
+          const currentStep = Number(shownQuestion.eventStep ?? eventSequenceRef.current.step ?? 0);
+          const nextCorrectCount = (eventSequenceRef.current.correctCount || 0) + (isCorrect ? 1 : 0);
+          const nextStep = currentStep + 1;
+
+          if (nextStep < EVENT_QUESTION_SEQUENCE.length) {
+            eventSequenceRef.current = { active: true, step: nextStep, correctCount: nextCorrectCount };
+            setEventProgress({ active: true, step: nextStep, correctCount: nextCorrectCount, total: EVENT_QUESTION_SEQUENCE.length });
+            setQuestionFeedback(null);
+            showEventQuestion(EVENT_QUESTION_SEQUENCE[nextStep], nextStep);
+            return;
+          }
+
+          // End of sequence → compute rewards
+          eventSequenceRef.current = { active: false, step: currentStep, correctCount: nextCorrectCount };
+          setEventProgress({ active: false, step: currentStep, correctCount: nextCorrectCount, total: EVENT_QUESTION_SEQUENCE.length });
+
+          const resolution = resolveEventQuestion(answeredState, nextCorrectCount);
+          setGameState(resolution.state);
+          setShownQuestion(null);
+          setQuestionFeedback(null);
+
+          if (resolution.noReward) {
+            setError('Không trả lời đúng câu nào, không có phần thưởng.');
+            endTurnLocal(resolution.state);
+          } else {
+            setPendingRewardChoices({
+              choices: resolution.choices,
+              difficulty: resolution.rewardDifficulty,
+              correctCount: nextCorrectCount,
+              isCorrect: true,
+              message: `✅ Trả lời đúng ${nextCorrectCount}/3 câu! Chọn 1 phần thưởng.`,
+            });
+            setRewardChoicePhase('select');
+            setSelectedRewardChoice(null);
+          }
+        }, 1200);
+        return;
+      }
+    } catch (err) {
+      setError('Lỗi xử lý câu trả lời: ' + (err.message || ''));
+      setAnswerProcessing(false);
+    }
+  }, [shownQuestion, answerProcessing, setGameState, setShownQuestion, doActualRoll, endTurnLocal, showEventQuestion]);
+
+  // ── Reward Choices ──────────────────────────────────────────
+  const handleSelectRewardChoice = useCallback((reward) => {
+    if (!reward || rewardChoiceLoading) return;
+    if (rewardRevealTimerRef.current) window.clearTimeout(rewardRevealTimerRef.current);
+
+    setSelectedRewardChoice(reward);
+
+    if (reward.type === 'move_target_back' || reward.type === 'force_skip_target') {
+      setPendingTargetReward(reward);
+      return;
+    }
+
+    if (reward.type === 'place_trap') {
+      setPendingTrapReward(reward);
+      setPendingRewardChoices(null);
+      setRewardNotice({
+        message: `Chọn 1 ô không phải event để đặt bẫy: ${reward.trapPenalty?.name || reward.name}`,
+        playerName: '',
+      });
+      return;
+    }
+
+    // Apply reward immediately
+    setRewardChoiceLoading(true);
+    try {
+      const current = gameStateRef.current;
+      const { state: rewardedState, reward: appliedReward } = applyEventChoice(current, reward.id);
+      setGameState(rewardedState);
 
       setRewardChoiceLoading(false);
-      setPendingTargetReward(null);
-      setPendingTrapReward(null);
-      if (data?.reward) {
-        setSelectedRewardChoice(data.reward);
-        setRewardChoicePhase('select');
-        setShuffledRewardChoices(prev => prev.length ? prev : [data.reward]);
-      }
-
-      if (rewardRevealTimerRef.current) {
-        window.clearTimeout(rewardRevealTimerRef.current);
-      }
+      setPendingRewardChoices(null);
+      setSelectedRewardChoice(appliedReward);
+      setRewardNotice({ message: `✅ Nhận: ${appliedReward?.name || 'Phần thưởng'}`, playerName: '' });
 
       rewardRevealTimerRef.current = window.setTimeout(() => {
         setPendingRewardChoices(null);
@@ -548,591 +475,170 @@ export default function GameBoard() {
         setShuffledRewardChoices([]);
         setSelectedRewardChoice(null);
         setRewardNotice(null);
+
+        if (rewardedState.status === 'finished') {
+          finalizeGame();
+        } else {
+          endTurnLocal(rewardedState);
+        }
       }, REWARD_REVEAL_DURATION_MS);
-    };
-
-    const handleEventActionPreview = (data) => {
-      if (!isSpectator || !data?.reward) return;
-
-      if (data.actionType === 'trapPlacement') {
-        setPendingTargetReward(null);
-        setPendingTrapReward(null);
-        setPendingRewardChoices(null);
-        setRewardNotice(null);
-        return;
-      }
-
-      setSelectedRewardChoice(data.reward);
-
-      if (data.actionType === 'targetChoice') {
-        setPendingTargetReward(data.reward);
-        setPendingTrapReward(null);
-        return;
-      }
-    };
-
-    const handlePlayerPositionsUpdated = (data) => {
-      if (data?.players) {
-        setCurrentRoom(prev => prev ? {
-          ...prev,
-          players: data.players,
-          spectators: data.spectators || prev.spectators || [],
-          traps: data.traps || prev.traps || [],
-          status: data.status || prev.status
-        } : null);
-
-        setGameState(prev => ({
-          ...(prev || {}),
-          players: data.players,
-          currentTurnIndex: data.currentTurnIndex ?? prev?.currentTurnIndex ?? 0,
-          currentPlayer: data.currentPlayer || prev?.currentPlayer || null,
-          traps: data.traps || prev?.traps || [],
-          status: data.status || prev?.status || 'playing',
-          boardSize: data.boardSize || prev?.boardSize || BOARD_SIZE
-        }));
-      }
-
-      setPositionSaving(false);
-      setPositionEditorOpen(false);
-
-      if (data?.message) {
-        setRewardNotice({
-          message: data.message,
-          playerName: ''
-        });
-      }
-    };
-
-    const handleTurnEnded = (data) => {
-      if (autoMoveTimerRef.current) {
-        window.clearTimeout(autoMoveTimerRef.current);
-      }
-
-      setCurrentRoom(prev => prev ? {
-        ...prev,
-        players: data.players,
-        traps: data.traps || prev.traps || [],
-        status: data.status || prev.status
-      } : null);
-
-      setGameState(prev => ({
-        ...(prev || {}),
-        currentTurnIndex: data.currentTurnIndex,
-        currentPlayer: data.currentPlayer,
-        players: data.players,
-        traps: data.traps || prev?.traps || [],
-        hasRolledThisTurn: false,
-        status: data.status || prev?.status || 'playing',
-        winner: data.winner || prev?.winner || null
-      }));
-
-      setDiceValues(null);
-      setDiceTotal(null);
-      setIsRolling(false);
-      setHasRolledThisTurn(false);
-      setCanMoveAfterRoll(false);
-      // Close question modal when turn ended
-      setShownQuestion(null);
-      setEventCellIndex(null);
-      setAnswerProcessing(false);
+    } catch (err) {
       setRewardChoiceLoading(false);
-      setPendingRewardChoices(null);
-      setQuestionFeedback(null);
-      setCanMoveAfterRoll(false);
-      setRewardChoicePhase('select');
-      setSelectedRewardChoice(null);
-      setPendingTargetReward(null);
-      setPendingTrapReward(null);
-      if (isSpectator) {
-        setBoardNotice((prev) => (prev?.type === 'trap' ? null : prev));
-      }
-      boardMovingRef.current = false;
-      pendingEventCellRef.current = null;
-      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
-      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
-
-      if (data.status === 'finished') {
-        finalizeGameAndNavigate();
-      }
-    };
-
-    const handleSocketError = (data) => {
-      eventResolvePendingRef.current = false;
-      setError(data?.message || 'Lỗi socket');
-      setIsRolling(false);
-      setLoading(false);
-      setAnswerProcessing(false);
-      setRewardChoiceLoading(false);
-      setPositionSaving(false);
-      setQuestionFeedback(null);
-      setRewardChoicePhase('select');
-      setSelectedRewardChoice(null);
-      setPendingTargetReward(null);
-      setPendingTrapReward(null);
-      setBoardNotice(null);
-      boardMovingRef.current = false;
-      pendingEventCellRef.current = null;
-      eventSequenceRef.current = { active: false, step: 0, correctCount: 0 };
-      setEventProgress({ active: false, step: 0, correctCount: 0, total: EVENT_QUESTION_SEQUENCE.length });
-    };
-
-    const handleTrapVisibilityChanged = (data) => {
-      const showTrapsOnMap = data?.showTrapsOnMap !== false;
-      setCurrentRoom(prev => prev ? { ...prev, showTrapsOnMap } : null);
-      setGameState(prev => prev ? { ...prev, showTrapsOnMap } : null);
-    };
-
-    socket.on(SOCKET_EVENTS.DICE_ROLLED, handleDiceRolled);
-    socket.on(SOCKET_EVENTS.SHOW_QUESTION, handleQuestionShown);
-    socket.on(SOCKET_EVENTS.PLAYER_MOVED, handlePlayerMoved);
-    socket.on(SOCKET_EVENTS.EVENT_CELL_LANDED, handleEventCellLanded);
-    socket.on(SOCKET_EVENTS.QUESTION_ANSWER_REVEALED, handleQuestionAnswerRevealed);
-    socket.on(SOCKET_EVENTS.EVENT_REWARD_CHOICES, handleEventRewardChoices);
-    socket.on(SOCKET_EVENTS.EVENT_REWARD_SHUFFLED, handleEventRewardShuffled);
-    socket.on(SOCKET_EVENTS.EVENT_REWARD_APPLIED, handleEventRewardApplied);
-    socket.on(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, handleEventActionPreview);
-    socket.on(SOCKET_EVENTS.PLAYER_POSITIONS_UPDATED, handlePlayerPositionsUpdated);
-    socket.on(SOCKET_EVENTS.TRAP_VISIBILITY_CHANGED, handleTrapVisibilityChanged);
-    socket.on(SOCKET_EVENTS.TURN_ENDED, handleTurnEnded);
-    socket.on(SOCKET_EVENTS.ERROR, handleSocketError);
-
-    return () => {
-      socket.off(SOCKET_EVENTS.DICE_ROLLED, handleDiceRolled);
-      socket.off(SOCKET_EVENTS.SHOW_QUESTION, handleQuestionShown);
-      socket.off(SOCKET_EVENTS.PLAYER_MOVED, handlePlayerMoved);
-      socket.off(SOCKET_EVENTS.EVENT_CELL_LANDED, handleEventCellLanded);
-      socket.off(SOCKET_EVENTS.QUESTION_ANSWER_REVEALED, handleQuestionAnswerRevealed);
-      socket.off(SOCKET_EVENTS.EVENT_REWARD_CHOICES, handleEventRewardChoices);
-      socket.off(SOCKET_EVENTS.EVENT_REWARD_SHUFFLED, handleEventRewardShuffled);
-      socket.off(SOCKET_EVENTS.EVENT_REWARD_APPLIED, handleEventRewardApplied);
-      socket.off(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, handleEventActionPreview);
-      socket.off(SOCKET_EVENTS.PLAYER_POSITIONS_UPDATED, handlePlayerPositionsUpdated);
-      socket.off(SOCKET_EVENTS.TRAP_VISIBILITY_CHANGED, handleTrapVisibilityChanged);
-      socket.off(SOCKET_EVENTS.TURN_ENDED, handleTurnEnded);
-      socket.off(SOCKET_EVENTS.ERROR, handleSocketError);
-    };
-  }, [roomId, socket, navigate, setCurrentRoom, setGameState, finalizeGameAndNavigate, processEventCellLanded, setShownQuestion, isSpectator, playerName]);
-
-  useEffect(() => {
-    if (!roomId || !playerName || !currentRoom) return;
-
-    const rejoinSocketRoom = () => {
-      const joinKey = `${socket.id || 'pending'}-${roomId}-${playerName}-${playerRole}`;
-
-      if (isSpectator) {
-        const spectator = currentRoom.spectators?.find((item) => item.name === playerName);
-        socket.emit(SOCKET_EVENTS.JOIN_AS_SPECTATOR, {
-          roomId,
-          name: playerName,
-          spectatorId: spectator?.spectatorId
-        });
-      } else {
-        const player = currentRoom.players?.find((item) => item.name === playerName);
-        socket.emit(SOCKET_EVENTS.JOIN_ROOM, {
-          roomId,
-          name: playerName,
-          playerId: player?.playerId,
-          character: playerCharacter || player?.character
-        });
-      }
-
-      socket.emit(SOCKET_EVENTS.GET_GAME_STATE, { roomId });
-      gameSocketJoinKeyRef.current = joinKey;
-    };
-
-    socket.on('connect', rejoinSocketRoom);
-    const currentJoinKey = `${socket.id || 'pending'}-${roomId}-${playerName}-${playerRole}`;
-    if (socket.connected && gameSocketJoinKeyRef.current !== currentJoinKey) {
-      rejoinSocketRoom();
+      setError(err.message || 'Lỗi áp dụng phần thưởng');
     }
+  }, [rewardChoiceLoading, setGameState, setShownQuestion, endTurnLocal, finalizeGame]);
 
-    return () => {
-      socket.off('connect', rejoinSocketRoom);
-    };
-  }, [socket, roomId, playerName, playerRole, playerCharacter, isSpectator, currentRoom]);
-
-  const handleRollDice = async () => {
-    try {
-      setError(null);
-      const gotQuestion = await requestQuestion('easy', { isPreRoll: true });
-      if (!gotQuestion) {
-        socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId });
-      }
-    } catch (err) {
-      setError('Loi khi chuan bi cau hoi');
-    }
-  };
-
-  const handleMoveAfterRoll = () => {
-    if (!isMyTurn || !canMoveAfterRoll || diceTotal == null || diceTotal <= 0 || gameFinished) return;
-
-    setCanMoveAfterRoll(false);
-    socket.emit(SOCKET_EVENTS.MOVE_PLAYER, { roomId, steps: diceTotal });
-  };
-
-  const handleSelectDifficulty = async (difficulty) => {
-    setEventQuestionDifficulty(difficulty);
-    setEventDifficultyOpen(false);
-    await requestQuestion(difficulty);
-  };
-
-  // Called when player selects an answer in the modal
-  const handleAnswerSelection = async (selectedIndex) => {
-    if (!shownQuestion || answerProcessing || answerLockedRef.current) return;
-    answerLockedRef.current = true;
-    setAnswerProcessing(true);
-
-    try {
-      const response = await new Promise((resolve, reject) => {
-        socket.timeout(6000).emit(
-          SOCKET_EVENTS.ANSWER_QUESTION,
-          { roomId, selectedIndex },
-          (ackError, ackResponse) => {
-            if (ackError) {
-              reject(ackError);
-              return;
-            }
-            resolve(ackResponse);
-          }
-        );
-      });
-
-      if (response?.ok === false) {
-        throw new Error(response.message || 'Khong cham duoc cau tra loi');
-      }
-
-      const correct = !!response?.isCorrect;
-      setQuestionFeedback({
-        selectedIndex,
-        correctIndex: response?.correctIndex ?? null,
-        isCorrect: correct
-      });
-
-      if (answerRevealTimerRef.current) {
-        window.clearTimeout(answerRevealTimerRef.current);
-      }
-
-      // Pre-roll question flow: only questions explicitly marked with isPreRoll
-      if (shownQuestion?.isPreRoll) {
-        answerRevealTimerRef.current = window.setTimeout(() => {
-          if (correct) {
-            socket.emit(SOCKET_EVENTS.ROLL_DICE, { roomId });
-          } else {
-            socket.emit(SOCKET_EVENTS.END_TURN, { roomId });
-            setError('Trả lời sai, mất lượt.');
-          }
-          setShownQuestion(null);
-          setQuestionFeedback(null);
-          setAnswerProcessing(false);
-        }, 1100);
-        return;
-      }
-
-      if (shownQuestion?.isEventSequence) {
-        answerRevealTimerRef.current = window.setTimeout(() => {
-          const currentStep = Number(shownQuestion.eventStep || eventSequenceRef.current.step || 0);
-          const nextCorrectCount = (eventSequenceRef.current.correctCount || 0) + (correct ? 1 : 0);
-          const nextStep = currentStep + 1;
-
-          if (nextStep < EVENT_QUESTION_SEQUENCE.length) {
-            eventSequenceRef.current = { active: true, step: nextStep, correctCount: nextCorrectCount };
-            setEventProgress({
-              active: true,
-              step: nextStep,
-              correctCount: nextCorrectCount,
-              total: EVENT_QUESTION_SEQUENCE.length
-            });
-            showEventQuestion(EVENT_QUESTION_SEQUENCE[nextStep], nextStep);
-            setQuestionFeedback(null);
-            setAnswerProcessing(false);
-            return;
-          }
-
-          eventSequenceRef.current = { active: false, step: currentStep, correctCount: nextCorrectCount };
-          setEventProgress({
-            active: false,
-            step: currentStep,
-            correctCount: nextCorrectCount,
-            total: EVENT_QUESTION_SEQUENCE.length
-          });
-          eventResolvePendingRef.current = true;
-          setShownQuestion(null);
-          socket.timeout(6000).emit(
-            SOCKET_EVENTS.RESOLVE_EVENT_QUESTION,
-            {
-              roomId,
-              correctCount: nextCorrectCount
-            },
-            (ackError, response) => {
-              if (!eventResolvePendingRef.current) return;
-
-              if (ackError || response?.ok === false) {
-                eventResolvePendingRef.current = false;
-                setAnswerProcessing(false);
-                setError(response?.message || 'Khong nhan duoc phan hoi tu may chu. Hay thu lai.');
-              }
-            }
-          );
-          window.setTimeout(() => {
-            if (!eventResolvePendingRef.current) return;
-
-            eventResolvePendingRef.current = false;
-            setAnswerProcessing(false);
-            setError('Da gui ket qua event nhung chua nhan duoc phan thuong. Hay thu lai.');
-          }, 9000);
-          setQuestionFeedback(null);
-        }, 1100);
-        return;
-      }
-
-      // Event question flow: resolve via event API (legacy single question)
-      if (!shownQuestion?.isEventSequence && (shownQuestion?.difficulty || eventQuestionDifficulty)) {
-        const difficulty = shownQuestion?.difficulty || eventQuestionDifficulty;
-        answerRevealTimerRef.current = window.setTimeout(() => {
-          eventResolvePendingRef.current = true;
-          socket.timeout(6000).emit(
-            SOCKET_EVENTS.RESOLVE_EVENT_QUESTION,
-            {
-              roomId,
-              difficulty,
-              isCorrect: !!correct
-            },
-            (ackError, response) => {
-              if (!eventResolvePendingRef.current) return;
-
-              if (ackError || response?.ok === false) {
-                eventResolvePendingRef.current = false;
-                setAnswerProcessing(false);
-                setError(response?.message || 'Không nhận được phản hồi từ máy chủ. Hãy thử trả lời lại.');
-              }
-            }
-          );
-          window.setTimeout(() => {
-            if (!eventResolvePendingRef.current) return;
-
-            eventResolvePendingRef.current = false;
-            setAnswerProcessing(false);
-            setError('Đã gửi câu trả lời nhưng chưa nhận được phần thưởng/phạt. Hãy thử lại.');
-          }, 9000);
-          setQuestionFeedback(null);
-        }, 1100);
-      }
-    } catch (err) {
-      setError('Lỗi xử lý câu trả lời');
-      setAnswerProcessing(false);
-    }
-  };
-
-  const handleLeaveGame = async () => {
-    try {
-      setLoading(true);
-      if (playerRole === PLAYER_ROLES.SPECTATOR) {
-        await api.removeSpectator(roomId, playerName);
-        socket.emit(SOCKET_EVENTS.LEAVE_AS_SPECTATOR, { roomId, name: playerName });
-      } else {
-        await api.leaveRoom(roomId, playerName);
-        socket.emit(SOCKET_EVENTS.LEAVE_ROOM, { roomId, name: playerName });
-      }
-      navigate('/');
-    } catch (err) {
-      setError('Lỗi khi rời trò chơi');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSelectRewardChoice = (reward) => {
-    if (!reward || rewardChoiceLoading) return;
-    if (rewardRevealTimerRef.current) {
-      window.clearTimeout(rewardRevealTimerRef.current);
-    }
-    setSelectedRewardChoice(reward);
-    if (reward.type === 'move_target_back' || reward.type === 'force_skip_target') {
-      socket.emit(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, {
-        roomId,
-        actionType: 'targetChoice',
-        reward
-      });
-      setPendingTargetReward(reward);
-      return;
-    }
-    if (reward.type === 'place_trap') {
-      socket.emit(SOCKET_EVENTS.EVENT_ACTION_PREVIEW, {
-        roomId,
-        actionType: 'trapPlacement',
-        reward
-      });
-      setPendingTrapReward(reward);
-      setPendingRewardChoices(null);
-      setRewardNotice({
-        message: `Chon 1 o khong phai event de dat bay: ${reward.trapPenalty?.name || reward.name}`,
-        playerName
-      });
-      return;
-    }
-
-    setRewardChoiceLoading(true);
-    socket.emit(SOCKET_EVENTS.CHOOSE_EVENT_REWARD, {
-      roomId,
-      rewardId: reward.id
-    });
-  };
-
-  const handleSelectTrapCell = (cellIndex) => {
+  const handleSelectTrapCell = useCallback((cellIndex) => {
     if (!pendingTrapReward || rewardChoiceLoading) return;
 
     setRewardChoiceLoading(true);
-    socket.emit(SOCKET_EVENTS.CHOOSE_EVENT_REWARD, {
-      roomId,
-      rewardId: pendingTrapReward.id,
-      trapCellIndex: cellIndex
-    });
-  };
+    try {
+      const current = gameStateRef.current;
+      const { state: rewardedState, placedTrap } = applyEventChoice(current, pendingTrapReward.id, null, cellIndex);
+      setGameState(rewardedState);
 
-  const handleSelectRewardTarget = (targetPlayer) => {
+      setRewardChoiceLoading(false);
+      setPendingTrapReward(null);
+      setRewardNotice({ message: `🪤 Đã đặt bẫy tại ô ${cellIndex}: ${placedTrap?.penalty?.name || ''}`, playerName: '' });
+
+      rewardRevealTimerRef.current = window.setTimeout(() => {
+        setRewardNotice(null);
+        endTurnLocal(rewardedState);
+      }, REWARD_REVEAL_DURATION_MS);
+    } catch (err) {
+      setRewardChoiceLoading(false);
+      setError(err.message || 'Không thể đặt bẫy tại ô này');
+    }
+  }, [pendingTrapReward, rewardChoiceLoading, setGameState, endTurnLocal]);
+
+  const handleSelectRewardTarget = useCallback((targetPlayer) => {
     if (!pendingTargetReward || !targetPlayer || rewardChoiceLoading) return;
 
     setRewardChoiceLoading(true);
-    socket.emit(SOCKET_EVENTS.CHOOSE_EVENT_REWARD, {
-      roomId,
-      rewardId: pendingTargetReward.id,
-      targetPlayerId: targetPlayer.playerId || targetPlayer.name
-    });
-  };
+    try {
+      const current = gameStateRef.current;
+      const targetId = targetPlayer.playerId || targetPlayer.name;
+      const { state: rewardedState, reward: appliedReward } = applyEventChoice(current, pendingTargetReward.id, targetId);
+      setGameState(rewardedState);
 
-  const handleShuffleRewardChoices = () => {
+      setRewardChoiceLoading(false);
+      setPendingTargetReward(null);
+      setPendingRewardChoices(null);
+      setRewardNotice({ message: `✅ Áp dụng: ${appliedReward?.name || ''} lên ${targetPlayer.name}`, playerName: '' });
+
+      rewardRevealTimerRef.current = window.setTimeout(() => {
+        setRewardNotice(null);
+        endTurnLocal(rewardedState);
+      }, REWARD_REVEAL_DURATION_MS);
+    } catch (err) {
+      setRewardChoiceLoading(false);
+      setError(err.message || 'Lỗi áp dụng');
+    }
+  }, [pendingTargetReward, rewardChoiceLoading, setGameState, endTurnLocal]);
+
+  const handleShuffleRewardChoices = useCallback(() => {
     if (!pendingRewardChoices?.choices?.length || rewardChoiceLoading) return;
-
-    const nextChoices = [...pendingRewardChoices.choices]
-      .map((choice) => ({ choice, sort: Math.random() }))
-      .sort((left, right) => left.sort - right.sort)
-      .map((item) => item.choice);
-
-    setShuffledRewardChoices(nextChoices);
+    const next = [...pendingRewardChoices.choices]
+      .map(c => ({ c, s: Math.random() }))
+      .sort((a, b) => a.s - b.s)
+      .map(x => x.c);
+    setShuffledRewardChoices(next);
     setSelectedRewardChoice(null);
     setRewardChoicePhase('select');
-    socket.emit(SOCKET_EVENTS.EVENT_REWARD_SHUFFLED, {
-      roomId,
-      choices: nextChoices
-    });
-  };
+  }, [pendingRewardChoices, rewardChoiceLoading]);
 
-  if (!gameState || !currentRoom) {
+  const handleLeaveGame = useCallback(() => {
+    resetGame();
+    navigate('/');
+  }, [resetGame, navigate]);
+
+  // ── Render ──────────────────────────────────────────────────
+  if (!gameState) {
     return <div className="game-board"><p>Đang tải trò chơi...</p></div>;
   }
 
   const players = gameState.players || [];
-  const traps = gameState.traps || currentRoom.traps || [];
-  const showTrapsOnMap = gameState.showTrapsOnMap ?? currentRoom.showTrapsOnMap ?? true;
+  const traps = gameState.traps || [];
+  const showTrapsOnMap = gameState.showTrapsOnMap ?? true;
   const currentPlayerIndex = gameState.currentTurnIndex || 0;
   const currentPlayer = players[currentPlayerIndex];
-  const isMyTurn = !isSpectator && currentPlayer && currentPlayer.name === playerName;
-  const canViewTurnDetails = isMyTurn || isSpectator;
-  const mapNoticeMessage = rewardNotice?.message || (canViewTurnDetails ? error : '');
   const boardSize = gameState.boardSize || BOARD_SIZE;
   const gameFinished = gameState.status === 'finished';
-  const winner = gameState.winner || players.find((player) => (player.position || 0) >= boardSize - 1);
+  const winner = players.find(p => p.finishedRank === 1);
+  const mapNoticeMessage = rewardNotice?.message || error || '';
+  const isMyTurn = true; // In local mode, it's always "your turn" (host controls all)
+  const canViewTurnDetails = true;
+
   const questionPlayerInfo = shownQuestion?.isEventSequence
-    ? `${isMyTurn ? 'Ban dang tra loi' : `${currentPlayer?.name || 'Nguoi choi'} dang tra loi`} - Cau ${(shownQuestion.eventStep || 0) + 1}/${shownQuestion.eventTotal || EVENT_QUESTION_SEQUENCE.length} - Dung ${eventProgress.correctCount}/3`
-    : (shownQuestion && isMyTurn ? 'Ban dang tra loi cau hoi' : shownQuestion ? `${currentPlayer?.name || 'Nguoi choi'} dang tra loi` : '');
-  const rewardTargetOptions = players.filter((player, index) => (
-    index !== currentPlayerIndex && !player.finishedRank
-  ));
-  const trapPlacementActive = isMyTurn && !!pendingTrapReward && !rewardChoiceLoading;
-  const showTargetChoiceModal = isMyTurn
-    ? !!pendingTargetReward
-    : isSpectator && !!pendingTargetReward;
+    ? `${currentPlayer?.name || 'Người chơi'} đang trả lời - Câu ${(shownQuestion.eventStep || 0) + 1}/${shownQuestion.eventTotal || 3} - Đúng ${eventProgress.correctCount}/3`
+    : (shownQuestion ? `${currentPlayer?.name || 'Người chơi'} đang trả lời` : '');
+
+  const rewardTargetOptions = players.filter((p, i) => i !== currentPlayerIndex && !p.finishedRank);
+  const trapPlacementActive = !!pendingTrapReward && !rewardChoiceLoading;
 
   return (
     <div className="game-board">
       <div className="game-container">
         <div className="game-header">
-          <h1>🎲 {currentRoom.name}</h1>
+          <h1>🎲 {roomName || 'Trò Chơi'}</h1>
           <div className="game-status">
             <span className="current-turn">
-              {isMyTurn ? '📍 Lượt của bạn' : `📍 Lượt của ${currentPlayer?.name || 'N/A'}`}
+              📍 Lượt của: <strong>{currentPlayer?.character?.emoji} {currentPlayer?.name || 'N/A'}</strong>
             </span>
-            {isHost && (
-              <>
+            <>
               <button
                 className={`host-trap-visibility-btn ${showTrapsOnMap ? 'active' : ''}`}
                 type="button"
                 onClick={handleToggleTrapVisibility}
-                aria-label={showTrapsOnMap ? 'An bay tren map' : 'Hien bay tren map'}
-                title={showTrapsOnMap ? 'An bay tren map cho tat ca nguoi choi' : 'Hien bay tren map cho tat ca nguoi choi'}
+                title={showTrapsOnMap ? 'Ẩn bẫy trên map' : 'Hiện bẫy trên map'}
               >
-                !
+                {showTrapsOnMap ? '👁' : '🙈'}
               </button>
               <button
                 className="host-settings-btn"
                 type="button"
                 onClick={openPositionEditor}
-                aria-label="Chinh vi tri nguoi choi"
-                title="Chinh vi tri nguoi choi"
+                title="Chỉnh vị trí người chơi"
               >
                 ⚙
               </button>
-              </>
-            )}
+            </>
           </div>
         </div>
 
-        {isHost && positionEditorOpen && (
+        {/* Position Editor Modal */}
+        {positionEditorOpen && (
           <div className="position-editor-overlay" onClick={closePositionEditor}>
-            <div className="position-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="position-editor-modal" onClick={e => e.stopPropagation()}>
               <div className="position-editor-head">
                 <div>
                   <h2>Chỉnh Vị Trí Người Chơi</h2>
                   <p>Nhập vị trí từ 0 đến {boardSize - 1}</p>
                 </div>
-                <button
-                  className="position-editor-close"
-                  type="button"
-                  onClick={closePositionEditor}
-                  disabled={positionSaving}
-                  aria-label="Dong bang chinh vi tri"
-                >
-                  ×
-                </button>
+                <button className="position-editor-close" onClick={closePositionEditor} disabled={positionSaving}>×</button>
               </div>
-
               <div className="position-editor-list">
                 {players.map((player, index) => {
-                  const playerKey = player.playerId || player.name || String(index);
+                  const key = player.playerId || player.name || String(index);
                   return (
-                    <label className="position-editor-row" key={playerKey}>
+                    <label className="position-editor-row" key={key}>
                       <span className="position-editor-player">
-                        <strong>{player.name}</strong>
+                        <strong>{player.character?.emoji} {player.name}</strong>
                         <small>Hiện tại: {player.position || 0}</small>
                       </span>
                       <input
-                        type="number"
-                        min="0"
-                        max={boardSize - 1}
-                        value={positionDrafts[playerKey] ?? player.position ?? 0}
-                        onChange={(event) => handlePositionDraftChange(playerKey, event.target.value)}
+                        type="number" min="0" max={boardSize - 1}
+                        value={positionDrafts[key] ?? player.position ?? 0}
+                        onChange={e => handlePositionDraftChange(key, e.target.value)}
                         disabled={positionSaving}
                       />
                     </label>
                   );
                 })}
               </div>
-
               <div className="position-editor-actions">
-                <button
-                  className="position-editor-cancel"
-                  type="button"
-                  onClick={closePositionEditor}
-                  disabled={positionSaving}
-                >
-                  Hủy
-                </button>
-                <button
-                  className="position-editor-save"
-                  type="button"
-                  onClick={handleSavePlayerPositions}
-                  disabled={positionSaving}
-                >
+                <button className="position-editor-cancel" onClick={closePositionEditor} disabled={positionSaving}>Hủy</button>
+                <button className="position-editor-save" onClick={handleSavePlayerPositions} disabled={positionSaving}>
                   {positionSaving ? 'Đang lưu...' : 'Lưu vị trí'}
                 </button>
               </div>
@@ -1140,148 +646,115 @@ export default function GameBoard() {
           </div>
         )}
 
+        {/* Question & Reward Modals */}
         {canViewTurnDetails && (
-        <>
-          <QuestionModal
-              visible={!!boardNotice && !shownQuestion && !pendingRewardChoices && !showTargetChoiceModal}
+          <>
+            <QuestionModal
+              visible={!!boardNotice && !shownQuestion && !pendingRewardChoices}
               mode="notice"
               noticeTitle={boardNotice?.title}
               noticeMessage={boardNotice?.message}
-              playerInfo={boardNotice?.type === 'event' && boardNotice?.canStartQuestion ? 'San sang roi thi bam xac nhan.' : ''}
-              confirmText="Xac nhan"
-              showConfirm={!!boardNotice?.canStartQuestion || (!isSpectator && boardNotice?.type === 'trap')}
+              playerInfo={boardNotice?.type === 'event' && boardNotice?.canStartQuestion ? 'Bấm xác nhận để bắt đầu!' : ''}
+              confirmText="Xác nhận"
+              showConfirm={!!boardNotice?.canStartQuestion || boardNotice?.type === 'trap'}
               onConfirm={handleConfirmBoardNotice}
-          />
+            />
 
-          <QuestionModal
-              visible={eventDifficultyOpen && !shownQuestion}
-              mode="difficulty"
-              onClose={() => {
-                if (!isMyTurn) {
-                  setEventDifficultyOpen(false);
-                }
-              }}
-              onSelectDifficulty={handleSelectDifficulty}
-              disabled={!isMyTurn}
-              eventCellIndex={eventCellIndex}
-              playerInfo={isMyTurn ? '👤 Bạn chọn độ khó' : `📍 ${currentPlayer?.name || 'Người chơi'} đang chọn độ khó`}
-          />
-
-          <QuestionModal
+            <QuestionModal
               visible={!!shownQuestion}
               question={shownQuestion}
               revealAnswer={!!questionFeedback}
               selectedAnswerIndex={questionFeedback?.selectedIndex ?? null}
               correctAnswerIndex={questionFeedback?.correctIndex ?? null}
-              feedbackText={questionFeedback ? (questionFeedback.isCorrect ? 'Đúng rồi, chờ kết quả tiếp theo...' : 'Sai rồi, chờ kết quả tiếp theo...') : ''}
+              feedbackText={questionFeedback ? (questionFeedback.isCorrect ? '✅ Đúng rồi!' : '❌ Sai rồi!') : ''}
               feedbackTone={questionFeedback?.isCorrect ? 'correct' : 'wrong'}
-              onClose={() => {
-                if (!isMyTurn) {
-                  setShownQuestion(null);
-                }
-              }}
               onAnswer={handleAnswerSelection}
-              disabled={!isMyTurn || answerProcessing}
+              disabled={answerProcessing}
               playerInfo={questionPlayerInfo}
-          />
+            />
 
-          <QuestionModal
-              visible={!!pendingRewardChoices}
+            <QuestionModal
+              visible={!!pendingRewardChoices && !pendingTargetReward}
               mode="rewardChoice"
               rewardOptions={pendingRewardChoices?.choices || []}
               rewardTitle={pendingRewardChoices?.isCorrect ? 'Chọn 1 trong 3 phần thưởng' : 'Chọn 1 trong 3 hình phạt'}
-              rewardHint={rewardChoicePhase === 'preview'
-                ? 'Xem kỹ 3 lựa chọn trước, rồi bấm Xáo bài để trộn và úp lại.'
-                : pendingRewardChoices?.message || ''}
-              playerInfo={isMyTurn ? 'Chọn 1 phần thưởng' : `${currentPlayer?.name || 'Người chơi'} đang chọn phần thưởng`}
+              rewardHint={pendingRewardChoices?.message || ''}
+              playerInfo={`${currentPlayer?.name || 'Người chơi'} chọn phần thưởng`}
               onSelectReward={handleSelectRewardChoice}
               onShuffleRewardChoices={handleShuffleRewardChoices}
               rewardChoicePhase={rewardChoicePhase}
               selectedRewardChoice={selectedRewardChoice}
               rewardDifficulty={pendingRewardChoices?.difficulty}
-              disabled={!isMyTurn || rewardChoiceLoading}
-          />
+              disabled={rewardChoiceLoading}
+            />
 
-          <QuestionModal
-              visible={showTargetChoiceModal}
+            <QuestionModal
+              visible={!!pendingTargetReward}
               mode="targetChoice"
               targetOptions={rewardTargetOptions}
               targetTitle={pendingTargetReward?.type === 'force_skip_target'
-                ? 'Chon nguoi choi mat luot'
-                : `Chon nguoi choi bi lui ${pendingTargetReward?.value || ''} buoc`}
+                ? 'Chọn người chơi bị mất lượt'
+                : `Chọn người chơi bị lùi ${pendingTargetReward?.value || ''} bước`}
               targetHint={pendingTargetReward?.name || ''}
               onSelectTarget={handleSelectRewardTarget}
-              disabled={!isMyTurn || rewardChoiceLoading}
-          />
-
-        </>
+              disabled={rewardChoiceLoading}
+            />
+          </>
         )}
 
         {gameFinished && (
           <div className="winner-message">
-            🏁 Trò chơi kết thúc! {winner ? `Người thắng: ${winner.name}` : 'Đã có người về đích'}
+            🏁 Trò chơi kết thúc! {winner ? `Người thắng: ${winner.character?.emoji} ${winner.name}` : 'Đã kết thúc!'}
           </div>
         )}
 
         <div className="game-content">
           <div className="board-section">
             <div className="board-overlay-shell">
-              {mapNoticeMessage && <div className="error-message map-error-message">{mapNoticeMessage}</div>}
-              <div
-                className={`players-info-section ${isPlayersPanelCollapsed ? 'collapsed' : ''}`}
-              >
+              {mapNoticeMessage && (
+                <div className="error-message map-error-message">{mapNoticeMessage}</div>
+              )}
+
+              {/* Players Panel */}
+              <div className={`players-info-section ${isPlayersPanelCollapsed ? 'collapsed' : ''}`}>
                 <div
                   className="players-panel-toggle"
                   role="button"
                   tabIndex={0}
-                  onClick={() => setIsPlayersPanelCollapsed((prev) => !prev)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setIsPlayersPanelCollapsed((prev) => !prev);
-                    }
-                  }}
+                  onClick={() => setIsPlayersPanelCollapsed(p => !p)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsPlayersPanelCollapsed(p => !p); } }}
                   aria-expanded={!isPlayersPanelCollapsed}
-                  aria-label={isPlayersPanelCollapsed ? 'Mở bảng xếp hạng' : 'Thu nhỏ bảng xếp hạng'}
                 >
                   <div className="players-panel-title-row">
                     <h3>👥 Người Chơi</h3>
-                    <span className="players-panel-toggle-icon">
-                      {isPlayersPanelCollapsed ? '›' : '‹'}
-                    </span>
+                    <span className="players-panel-toggle-icon">{isPlayersPanelCollapsed ? '›' : '‹'}</span>
                   </div>
 
                   {!isPlayersPanelCollapsed && (
                     <div className="players-info">
-                      {players.map((player, idx) => {
-                        const shieldCount = Number(player.shieldCount || 0);
-                        const finishedRank = Number(player.finishedRank || 0);
-
-                        return (
+                      {players.map((player, idx) => (
                         <div
-                          key={`${player.playerId || player.name || 'player'}-${idx}`}
-                          className={`player-info-card ${idx === currentPlayerIndex ? 'current' : ''}`}
+                          key={player.playerId || player.name || idx}
+                          className={`player-info-card ${idx === currentPlayerIndex ? 'current' : ''} ${player.finishedRank ? 'finished' : ''}`}
                         >
                           <div className="player-header">
-                            <span className="player-name">{player.name}</span>
+                            <span className="player-name">{player.character?.emoji} {player.name}</span>
                             {idx === currentPlayerIndex && <span className="turn-indicator">🔄</span>}
                           </div>
                           <div className="player-stats">
-                            {finishedRank > 0 && (
-                              <span className="player-finished-badge" title={`Hang ${finishedRank}`}>
-                                Hang #{finishedRank}
-                              </span>
+                            {player.finishedRank > 0 && (
+                              <span className="player-finished-badge">Hạng #{player.finishedRank}</span>
                             )}
-                            {shieldCount > 0 && (
-                              <span className="player-shield-badge" title={`Khiên: ${shieldCount}`}>
-                                🛡 {shieldCount}
-                              </span>
+                            {Number(player.shieldCount || 0) > 0 && (
+                              <span className="player-shield-badge">🛡 {player.shieldCount}</span>
+                            )}
+                            {Number(player.skipTurns || 0) > 0 && (
+                              <span className="player-skip-badge">⏭ Mất {player.skipTurns} lượt</span>
                             )}
                             <p>Vị trí: {player.position}</p>
                           </div>
                         </div>
-                        );
-                      })}
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1299,48 +772,24 @@ export default function GameBoard() {
                 onMovementComplete={handleBoardMovementComplete}
               />
 
+              {/* Controls */}
               <div className="control-section map-controls-overlay">
-                {(isMyTurn || isSpectator) && (
-                  <Dice
-                    onRoll={handleRollDice}
-                    values={diceValues}
-                    total={diceTotal}
-                    modifier={lastRollInfo?.modifier || 0}
-                    isRolling={isRolling}
-                    disabled={!isMyTurn || hasRolledThisTurn || gameFinished}
-                    loading={loading}
-                    showRollButton={isMyTurn}
-                  />
-                )}
+                <Dice
+                  onRoll={handleRollDice}
+                  values={diceValues}
+                  total={diceTotal}
+                  modifier={lastRollInfo?.modifier || 0}
+                  isRolling={isRolling}
+                  disabled={hasRolledThisTurn || gameFinished || !!shownQuestion || !!boardNotice || !!pendingRewardChoices || !!pendingTrapReward || !!pendingTargetReward}
+                  showRollButton={true}
+                />
 
-                {isMyTurn && canMoveAfterRoll && hasRolledThisTurn && diceTotal != null && (
+                {canMoveAfterRoll && hasRolledThisTurn && diceTotal != null && !gameFinished && (
                   <div className="movement-controls">
-                    <p className="dice-result">Bạn lắc được: <strong>{diceTotal}</strong> ô</p>
-                    <button
-                      className="btn-move"
-                      onClick={handleMoveAfterRoll}
-                      disabled={!isMyTurn || gameFinished}
-                    >
-                      Di chuyển
+                    <p className="dice-result">Lắc được: <strong>{diceTotal}</strong> ô</p>
+                    <button className="btn-move" onClick={handleMoveAfterRoll}>
+                      🎯 Di Chuyển {currentPlayer?.character?.emoji} {currentPlayer?.name}
                     </button>
-                  </div>
-                )}
-
-                {isSpectator && (
-                  <div className="spectator-info">
-                    <p>👁️ Bạn đang xem trò chơi</p>
-                    {lastRollInfo && lastRollInfo.total != null && (
-                      <div className="spectator-roll-result">
-                        <p>
-                          🎲 <strong>{lastRollInfo.playerName}</strong> vừa lắc:
-                        </p>
-                        <p className="spectator-roll-values">
-                          {lastRollInfo.diceValues
-                            ? formatDiceResult(lastRollInfo.diceValues, lastRollInfo.total, lastRollInfo.modifier)
-                            : lastRollInfo.total}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -1349,11 +798,7 @@ export default function GameBoard() {
         </div>
 
         <div className="game-footer">
-          <button
-            className="btn btn-secondary"
-            onClick={handleLeaveGame}
-            disabled={loading}
-          >
+          <button className="btn btn-secondary" onClick={handleLeaveGame}>
             🚪 Rời trò chơi
           </button>
         </div>
@@ -1361,5 +806,3 @@ export default function GameBoard() {
     </div>
   );
 }
-
-
