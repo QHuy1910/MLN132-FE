@@ -2,204 +2,240 @@
   {
     "id": 1,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tú, bạn đã nhắc đến Phó Giáo Sư nào?",
+    "question": "Việc Chủ tịch Hồ Chí Minh ủy quyền cho cụ Huỳnh Thúc Kháng điều hành đất nước với lời dặn \"Dĩ bất biến, ứng vạn biến\" phản ánh điều gì sâu sắc nhất về nghệ thuật quản trị?",
     "answers": [
-      "PGS. Đặng Thị Hoa",
-      "PGS. Nguyễn Thị Bảo Anh",
-      "PGS. Vũ Văn Đông",
-      "PGS. Đoàn Thanh Nghị"
-    ],
-    "correctAnswer": 0
-  },
-  {
-    "id": 2,
-    "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tú, bạn đã nhắc đến Bác sĩ nào?",
-    "answers": [
-      "BS. Thạch",
-      "BS. Khang",
-      "BS. Tuấn",
-      "BS. Duy"
-    ],
-    "correctAnswer": 3
-  },
-  {
-    "id": 3,
-    "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tú, bạn đã đưa ra bao nhiêu nguồn trích dẫn?",
-    "answers": [
-      "5",
-      "6",
-      "7",
-      "8"
+      "Sự né tránh trách nhiệm khi tình hình căng thẳng.",
+      "Sự tin tưởng giao quyền, cho phép linh hoạt giải quyết công việc tùy biến động nhưng tuyệt đối không được đi ngược lại lợi ích quốc gia.",
+      "Bắt buộc người được ủy quyền phải làm theo một khuôn mẫu cố định.",
+      "Yêu cầu dừng mọi hoạt động đối ngoại cho đến khi Bác về."
     ],
     "correctAnswer": 1
   },
   {
-    "id": 4,
+    "id": 2,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tú, câu nói \"Nam giới có thể bị quấy rối tình dục, kiểm soát, bạo lực bằng lời nói - nhưng ít được ghi nhận.\" được trích từ nguồn nào?",
+    "question": "Tại sao việc ký Hiệp định Sơ bộ (6/3/1946) được xem là một \"sự nhượng bộ có nguyên tắc\"?",
     "answers": [
-      "Nguồn: Báo Pháp Luật",
-      "Nguồn: Người Lao Động",
-      "Nguồn: Tuổi trẻ",
-      "Nguồn: Thanh niên"
+      "Vì ta đồng ý cho Pháp vào miền Bắc thay thế quân Tưởng trong một thời gian nhất định, để đổi lấy việc đẩy quân Tưởng về nước và bảo vệ mục tiêu chiến lược lâu dài.",
+      "Vì ta nhượng bộ quyền kiểm soát toàn bộ đất nước để tránh đổ máu.",
+      "Vì ta chấp nhận từ bỏ nền độc lập dân tộc để đổi lấy tự trị kinh tế.",
+      "Vì Pháp đồng ý rút quân ngay lập tức khỏi Việt Nam."
     ],
     "correctAnswer": 0
   },
   {
+    "id": 3,
+    "difficulty": "hard",
+    "question": "Sự kiện nào minh chứng rõ nét nhất cho giới hạn cuối cùng của \"Cái vạn biến\" (sự linh hoạt) trong tư tưởng Hồ Chí Minh?",
+    "answers": [
+      "Ký kết Hiệp định Sơ bộ",
+      "Sang Pháp đàm phán",
+      "Phát động toàn quốc kháng chiến khi lợi ích dân tộc bị xâm phạm và hòa bình không còn khả năng",
+      "Ký Tạm ước 14/9"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "id": 4,
+    "difficulty": "hard",
+    "question": "Cụm từ \"Ngàn cân treo sợi tóc\" phản ánh đúng nhất tính chất nào của bối cảnh lịch sử nước ta năm 1945?",
+    "answers": [
+      "Sự khủng hoảng kinh tế không thể khắc phục.",
+      "Sự đe dọa sinh tử từ nhiều phía bủa vây cùng lúc đối với một chính quyền non trẻ, thiếu thốn về mọi nguồn lực quân sự, kinh tế và chính trị.",
+      "Việc thiếu nhân sự cấp cao trong bộ máy nhà nước.",
+      "Khó khăn trong việc ngoại giao với một cường quốc duy nhất."
+    ],
+    "correctAnswer": 1
+  },
+  {
     "id": 5,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của nhóm, có tổng bao nhiêu chương?",
+    "question": "Điểm sáng chói nhất về \"Giá trị Ngoại giao\" khi vận dụng tư tưởng này là gì?",
     "answers": [
-      "4",
-      "5",
-      "6",
-      "7"
+      "Dùng đàm phán để ép các nước lớn phải bồi thường.",
+      "Kết hợp khéo léo giữa đấu tranh và đàm phán, biết nhân nhượng đúng lúc nhưng luôn đặt lợi ích quốc gia lên hàng đầu.",
+      "Hoàn toàn phụ thuộc vào sự phán xử của các tổ chức quốc tế.",
+      "Tuyệt đối không đàm phán với bất kỳ kẻ thù nào."
     ],
     "correctAnswer": 1
   },
   {
     "id": 6,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tú, bạn đã sử dụng câu nói dân gian nào?",
+    "question": "Hành động tiếp tục đàm phán và ký Tạm ước 14/9 trong khi vẫn đang âm thầm chuẩn bị lực lượng kháng chiến chứng tỏ năng lực gì của Đảng ta?",
     "answers": [
-      "Có tiền là có quyền",
-      "Thuận vợ thuận chồng, tát biển Đông cũng cạn.",
-      "Chồng cày, vợ cấy, con trâu đi bừa.",
-      "Bà phải có ông, chồng phải có vợ."
-    ],
-    "correctAnswer": 0
-  },
-  {
-    "id": 7,
-    "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tòng, Ngoài bạo lực thể chất, nam giới còn có thể phải chịu bao nhiêu loại bạo lực mà bạn đã liệt kê?",
-    "answers": [
-      "5",
-      "6",
-      "7",
-      "8"
+      "Sự sợ hãi trước sức mạnh quân sự của Pháp.",
+      "Năng lực chủ động thích ứng, kéo dài thời gian hòa bình tối đa và hạn chế nguy cơ chiến tranh ngay lập tức.",
+      "Sự thiếu kiên định trong đường lối đối ngoại.",
+      "Sự thỏa hiệp vô điều kiện."
     ],
     "correctAnswer": 1
   },
   {
+    "id": 7,
+    "difficulty": "hard",
+    "question": "Điểm chung cốt lõi giữa quyết định \"Hòa với quân Tưởng\" và việc \"Ký Hiệp định Sơ bộ\" là gì?",
+    "answers": [
+      "Đều là sách lược linh hoạt nhằm phân hóa kẻ thù, tránh phải đối đầu đồng thời với nhiều lực lượng.",
+      "Đều là sự đầu hàng vô điều kiện để giữ lại chính quyền.",
+      "Đều dựa vào sức mạnh quân sự của các cường quốc phương Tây.",
+      "Đều nhằm mục đích tấn công ngay lập tức quân xâm lược."
+    ],
+    "correctAnswer": 0
+  },
+  {
     "id": 8,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Tòng, ở phần 1.1 các số liệu được nghiên cứu tại các quốc gia nào?",
+    "question": "Mối quan hệ biện chứng giữa \"Cái bất biến\" và \"Cái vạn biến\" được thể hiện như thế nào?",
     "answers": [
-      "Việt Nam, Lào, Campuchia và Singapore",
-      "Mỹ, Canada, Úc và Vương quốc Anh",
-      "Mỹ, Trung Quốc, Ấn Độ và Mexico",
-      "Tây Ban Nha, Bồ Đồ Nha, Brazil và Đức"
+      "\"Vạn biến\" có thể làm thay đổi hoàn toàn \"bất biến\".",
+      "Những giá trị \"bất biến\" tạo nền tảng vững chắc để mọi sách lược linh hoạt (vạn biến) không đi chệch khỏi mục tiêu cách mạng.",
+      "\"Bất biến\" làm cản trở khả năng ứng phó linh hoạt của nhà lãnh đạo.",
+      "Hai yếu tố này tách rời và không ảnh hưởng đến nhau."
     ],
     "correctAnswer": 1
   },
   {
     "id": 9,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục đầu tiên là?",
+    "question": "Bài học \"Kết hợp sức mạnh dân tộc với sức mạnh thời đại\" được vận dụng vào giai đoạn 1945-1946 thông qua hành động nào?",
     "answers": [
-      "Ứng dụng công nghệ",
-      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
-      "Lan tỏa nhận thức",
-      "Tôn trọng lẫn nhau"
+      "Dựa hoàn toàn vào sức mạnh quân sự của các nước đồng minh.",
+      "Tranh thủ các yếu tố và biến động chính trị thế giới (như mâu thuẫn Pháp - Tưởng) để bảo vệ chính quyền.",
+      "Kêu gọi quân đội nước ngoài vào đóng quân.",
+      "Xây dựng nền kinh tế khép kín không phụ thuộc bên ngoài."
     ],
     "correctAnswer": 1
   },
   {
     "id": 10,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Khôi, bạn có nhắc đến Luật Bình đẳng giới năm 2006 thì bạn đã nhắc đến điều số mấy?",
+    "question": "Khẳng định nào sau đây là giải thích ĐÚNG NHẤT về \"sự linh hoạt\" trong tư tưởng Hồ Chí Minh?",
     "answers": [
-      "Điều 3",
-      "Điều 6",
-      "Điều 9",
-      "Điều 12"
+      "Linh hoạt nghĩa là có thể thỏa hiệp lợi ích quốc gia để đổi lấy hòa bình.",
+      "Linh hoạt là thường xuyên thay đổi mục tiêu chiến lược.",
+      "Linh hoạt không đồng nghĩa với nhân nhượng vô điều kiện; khi lợi ích dân tộc bị xâm phạm, phải kiên quyết đấu tranh.",
+      "Linh hoạt là nhượng bộ mọi yêu sách của đối phương."
     ],
-    "correctAnswer": 1
+    "correctAnswer": 2
   },
   {
     "id": 11,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục thứ hai là?",
+    "question": "Tại sao nói tư tưởng \"Dĩ bất biến, ứng vạn biến\" mang lại giá trị chính trị là \"tăng vị thế của Việt Nam trên trường quốc tế\"?",
     "answers": [
-      "Kêu gọi hành động",
-      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
-      "Lan tỏa nhận thức",
-      "Xây dựng gia đình trong tương lai - Từ bài học thực tiễn"
+      "Vì Việt Nam đã xây dựng được quân đội mạnh nhất khu vực.",
+      "Vì qua đàm phán (như Hiệp định Sơ bộ), Việt Nam buộc các nước lớn (như Pháp) phải công nhận tư cách một quốc gia tự do, bảo vệ được chính quyền.",
+      "Vì Việt Nam gia nhập Liên Hợp Quốc ngay trong năm 1945.",
+      "Vì các nước lớn đã cung cấp viện trợ tài chính khổng lồ."
     ],
-    "correctAnswer": 3
+    "correctAnswer": 1
   },
   {
     "id": 12,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Khôi, nội dung bạn thuyết trình giúp xóa bỏ định kiến nào?",
+    "question": "Trong bối cảnh hội nhập hiện nay, nguyên tắc \"bất biến\" của quốc gia được bổ sung nhấn mạnh thêm yếu tố nào bên cạnh độc lập, chủ quyền?",
     "answers": [
-      "Đàn ông phải mạnh mẽ và không được khóc",
-      "Đàn ông luôn là người gây ra bạo lực gia đình",
-      "Đàn ông thì không thể là nạn nhân",
-      "Đàn ông có khả năng tự giải quyết mọi vấn đề"
+      "Đóng cửa nền kinh tế.",
+      "Chỉ phát triển công nghệ cao.",
+      "Giữ vững toàn vẹn lãnh thổ.",
+      "Mở rộng quân đội thường trực."
     ],
     "correctAnswer": 2
   },
   {
     "id": 13,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Khanh, bạn đã nhắc đến 3 Điều của Hiến Pháp 2013 đó là các Điều nào?",
+    "question": "Lời khuyên \"Không từ bỏ mục tiêu trước khó khăn\" đối với sinh viên tương ứng với yếu tố nào trong tư tưởng này?",
     "answers": [
-      "Điều 10, Điều 20, Điều 30",
-      "Điều 13, Điều 23, Điều 33",
-      "Điều 16, Điều 26, Điều 36",
-      "Điều 19, Điều 29, Điều 39"
+      "Dĩ",
+      "Bất biến",
+      "Ứng",
+      "Vạn biến"
     ],
-    "correctAnswer": 2
+    "correctAnswer": 1
   },
   {
     "id": 14,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Khanh, đã nhắc đến Điều mấy của Luật Phòng, chống bạo lực gia đình năm 2022 (Luật số 13/2022/QH15)?",
+    "question": "Thành công vĩ đại nhất của việc vận dụng tư tưởng này trong năm 1945-1946 là gì?",
     "answers": [
-      "Điều 3",
-      "Điều 6",
-      "Điều 9",
-      "Điều 12"
+      "Xây dựng ngay lập tức một nền kinh tế công nghiệp hóa.",
+      "Giúp chính quyền cách mạng non trẻ vượt qua giai đoạn cam go, tạo tiền đề vững chắc cho thắng lợi của kháng chiến sau này.",
+      "Thống nhất đất nước hai miền Nam - Bắc vào cuối năm 1946.",
+      "Đuổi hoàn toàn tất cả các lực lượng nước ngoài khỏi lãnh thổ ngay lập tức."
     ],
-    "correctAnswer": 2
+    "correctAnswer": 1
   },
   {
     "id": 15,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Huy, nội dung gồm có 3 mục nhỏ vậy mục thứ ba là?",
+    "question": "Vì sao Hồ Chí Minh lại đặt \"Quyền lợi của nhân dân\" là một trong những giá trị \"bất biến\"?",
     "answers": [
-      "Kêu gọi hành động",
-      "Trách nhiệm của mỗi cá nhân sau khi tốt nghiệp FPT",
-      "Lan tỏa nhận thức",
-      "Tôn trọng lẫn nhau"
+      "Vì nhân dân là lực lượng nộp thuế.",
+      "Vì mục tiêu tối cao của mọi thành quả cách mạng và chủ quyền quốc gia cuối cùng đều phục vụ cho quyền lợi của nhân dân.",
+      "Để tranh thủ viện trợ quốc tế.",
+      "Để làm hài lòng phe đối lập."
     ],
-    "correctAnswer": 0
+    "correctAnswer": 1
   },
   {
     "id": 16,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Huy, trong phần 5.3 có nhắc tới nghị định nào?",
+    "question": "Sự chuyển đổi từ trạng thái ký kết hiệp ước sang phát động kháng chiến cho thấy giá trị quân sự nào được áp dụng?",
     "answers": [
-      "Nghị định 232/2025/NĐ-CP",
-      "Nghị định 82/2025/NĐ-CP",
-      "Nghị định 282/2025/NĐ-CP",
-      "Nghị định 168/2024/NĐ-CP"
+      "Chủ động lựa chọn thời điểm đấu tranh.",
+      "Tấn công phủ đầu.",
+      "Tiêu hao sinh lực địch.",
+      "Trốn tránh xung đột."
     ],
-    "correctAnswer": 2
+    "correctAnswer": 0
   },
   {
     "id": 17,
     "difficulty": "hard",
-    "question": "Trong phần thuyết trình của bạn Huy, trong phần 5.1 cần phá bỏ định kiến nào?",
+    "question": "Đâu là mối nguy hiểm lớn nhất nếu áp dụng sai lệch, biến sự linh hoạt (vạn biến) thành sự thỏa hiệp?",
     "answers": [
-      "Đàn ông phải tự tin và không được yếu đuối.",
-      "Đàn ông phải mạnh mẽ và không thể là nạn nhân.",
-      "Đàn ông phải là trụ cột của gia đình.",
-      "Đàn ông phải có chí tiến thủ không chùn bước."
+      "Mất cơ hội hợp tác kinh tế.",
+      "Đi chệch mục tiêu cách mạng, đánh mất các giá trị bất biến là chủ quyền và độc lập.",
+      "Gây bất mãn cho các nước đồng minh.",
+      "Làm kéo dài thời gian đàm phán."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 18,
+    "difficulty": "hard",
+    "question": "Động thái ký Hiệp định sơ bộ giúp ta có thêm thời gian, điều này phản ánh ý nghĩa to lớn nhất ở lĩnh vực nào để đối phó chiến tranh lâu dài?",
+    "answers": [
+      "Văn hóa - Xã hội",
+      "Quân sự (tranh thủ thời gian xây dựng lực lượng)",
+      "Kinh tế học",
+      "Giáo dục"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 19,
+    "difficulty": "hard",
+    "question": "Có thể nói, toàn bộ tư tưởng \"Dĩ bất biến, ứng vạn biến\" là kết tinh của những yếu tố nào ở người lãnh đạo?",
+    "answers": [
+      "Sự may mắn và thời cơ.",
+      "Bản lĩnh, trí tuệ và nghệ thuật lãnh đạo.",
+      "Sức mạnh quân sự và sự uy hiếp.",
+      "Khả năng hùng biện."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "id": 20,
+    "difficulty": "hard",
+    "question": "Tầm quan trọng của nguồn gốc triết học phương Đông đối với tư tưởng này là gì?",
+    "answers": [
+      "Cung cấp các chiến thuật quân sự.",
+      "Nhấn mạnh sự hài hòa giữa việc giữ vững nguyên tắc cốt lõi và linh hoạt thích ứng với biến động của hoàn cảnh.",
+      "Loại bỏ hoàn toàn triết học phương Tây.",
+      "Đưa ra các mô hình kinh tế để áp dụng."
     ],
     "correctAnswer": 1
   }

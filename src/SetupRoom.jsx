@@ -74,8 +74,8 @@ export default function SetupRoom() {
         {/* Header */}
         <div className="setup-header">
           <div className="setup-logo">🎲</div>
-          <h1>Hành Trình Chống Bạo Lực Gia Đình</h1>
-          <p className="setup-subtitle">Cùng nhau nhận diện, phòng tránh và lên tiếng</p>
+          <h1>Dĩ Bất Biến - Ứng Vạn Biến</h1>
+          <p className="setup-subtitle">Hành trình khám phá nghệ thuật lãnh đạo của Hồ Chí Minh</p>
         </div>
 
         <div className="setup-card">
